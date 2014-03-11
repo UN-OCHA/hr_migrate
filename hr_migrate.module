@@ -1,0 +1,184 @@
+<?php
+
+/**
+ * This is example code for a Drupal 6 to Drupal 7 migration. This won't actually
+ * work without defining the referenced vocabularies, content types, and fields
+ * on each side.
+ */
+
+/**
+ * Implements hook_flush_caches().
+ */
+function hr_migrate_flush_caches() {
+  hr_migrate_register_migrations();
+}
+
+/**
+ * Register all D6->D7 migrations.
+ */
+function hr_migrate_register_migrations() {
+  /**
+   * Each migration being registered takes an array of arguments, some required
+   * and some optional. Start with the common arguments required by all - the
+   * source_connection (connection key, set up in settings.php, pointing to
+   * the Drupal 6 database), source_version (major version of Drupal), and
+   * group_name (a.k.a. import job).
+   */
+  $common_arguments = array(
+    'source_connection' => 'www',
+    'source_version' => 7,
+    'group_name' => 'hr',
+  );
+
+  // The description and the migration machine name are also required arguments,
+  // which will be unique for each migration you register.
+  $arguments = $common_arguments + array(
+    'description' => t('Migration of users from www.humanitarianresponse.info'),
+    'machine_name' => 'hr_users',
+  );
+
+  // We just use the migrate_d2d D6 migration class as-is.
+  Migration::registerMigration('DrupalUser7Migration', $arguments['machine_name'],
+                               $arguments);
+
+  $profile_arguments = $common_arguments + array(
+    'description' => t('Migration of user profiles from www.humanitarianresponse.info'),
+    'machine_name' => 'hr_profiles',
+    'user_migration' => 'hr_users',
+  );
+
+  Migration::registerMigration('HRProfile2Migration', $profile_arguments['machine_name'], $profile_arguments);
+
+  $fc_arguments = $common_arguments + array(
+    'description' => t('Migration of field collections'),
+    'machine_name' => 'hr_field_collections',
+  );
+
+  Migration::registerMigration('HRFilesCollectionMigration', $fc_arguments['machine_name'], $fc_arguments);
+
+  $files_arguments = $common_arguments + array(
+    'description' => t('Migration of files'),
+    'machine_name' => 'hr_files',
+    'user_migration' => 'hr_users',
+    'source_dir' => 'https://www.humanitarianresponse.info/sites/www.humanitarianresponse.info/files/',
+    'site' => 'www.humanitarianresponse.info',
+  );
+
+  Migration::registerMigration('HRFileMigration', $files_arguments['machine_name'], $files_arguments);
+
+  // For vocabulary migrations, source_vocabulary and destination_vocabulary are
+  // required arguments. Note that in Drupal 6 vocabularies did not have machine
+  // names, so we use the vocabulary ID to uniquely identify them.
+  /*$vocabulary_arguments = array(
+    array(
+      'description' => t('Migration of Countries terms from Drupal 6'),
+      'machine_name' => 'Countries',
+      'source_vocabulary' => '1',  // D6 Vocabulary ID
+      'destination_vocabulary' => 'countries',
+    ),
+    array(
+      'description' => t('Migration of Topics terms from Drupal 6'),
+      'machine_name' => 'Topics',
+      'source_vocabulary' => '2',  // D6 Vocabulary ID
+      'destination_vocabulary' => 'topics',
+    ),
+  );
+
+  // Again, we're using the migrate_d2d class directly.
+  // The soft dependency says that while we don't have to run the user migration
+  // first, we want to make sure it's listed first so the vocubularies are
+  // listed right ahead of the node migrations.
+  $common_vocabulary_arguments = $common_arguments + array(
+    'class_name' => 'DrupalTerm6Migration',
+    'soft_dependencies' => array('User'),
+  );
+  foreach ($vocabulary_arguments as $arguments) {
+    $arguments += $common_vocabulary_arguments;
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+                                 $arguments);
+  }*/
+
+  // Node migrations - each has its own class derived from the migrate_d2d class,
+  // specifying its particular field mappings and transformations. source_type
+  // and destination_type are required arguments.
+  $node_arguments = array(
+    array(
+      'class_name' => 'DrupalNode7Migration',
+      'description' => t('Migration of pages'),
+      'machine_name' => 'hr_pages',
+      'source_type' => 'page',
+      'destination_type' => 'hr_page',
+    ),
+    array(
+      'class_name' => 'HRDocumentMigration',
+      'description' => t('Migration of documents'),
+      'machine_name' => 'hr_documents',
+      'source_type' => 'document',
+      'destination_type' => 'hr_document',
+    ),
+    array(
+      'class_name' => 'HRNewsMigration',
+      'description' => t('Migration of news'),
+      'machine_name' => 'hr_news',
+      'source_type' => 'news',
+      'destination_type' => 'hr_news',
+    ),
+    array(
+      'class_name' => 'HREventsMigration',
+      'description' => t('Migration of events'),
+      'machine_name' => 'hr_events',
+      'source_type' => 'event',
+      'destination_type' => 'hr_event',
+    ),
+  );
+  // Tell the node migrations where the users are coming from, so they can
+  // set up the dependency and resolve D6->D7 uids.
+  $common_node_arguments = $common_arguments + array(
+    'user_migration' => 'hr_users',
+    'format_mappings' => array(
+      'full_html' => 'panopoly_wysiwyg_text',
+      'filtered_html' => 'panopoly_html_text',
+      'simple' => 'panopoly_html_text',
+      'plain_text' => 'plain_text',
+    ),
+  );
+  foreach ($node_arguments as $arguments) {
+    $arguments = array_merge_recursive($arguments, $common_node_arguments);
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+                                 $arguments);
+  }
+
+  // Menu migrations -- same requirements as users
+  /*$menu_arguments = $common_arguments + array(
+    'description' => t('Migration of menus from Drupal 6'),
+    'machine_name' => 'Menu',
+  );
+
+  // We just use the migrate_d2d D6 migration class as-is.
+  Migration::registerMigration('DrupalMenu6Migration', $menu_arguments['machine_name'],
+                               $menu_arguments);
+
+  // Menu links migrations -- basic requirements, plus must set up menu dependency
+  $menu_links_arguments = $common_arguments + array(
+    'description' => t('Migration of menu links from Drupal 6'),
+    'machine_name' => 'MenuLinks',
+    'menu_migration' => $menu_arguments['machine_name'],
+  );
+  Migration::registerMigration('DrupalMenuLinks6Migration', $menu_links_arguments['machine_name'],
+                               $menu_links_arguments);*/
+}
+
+/**
+ * Implements hook_migrate_api().
+ */
+function hr_migrate_migrate_api() {
+  $api = array(
+    'api' => 2,
+    'groups' => array(
+      'hr' => array(
+        'title' => t('HR Migrations'),
+      ),
+    ),
+  );
+  return $api;
+}
