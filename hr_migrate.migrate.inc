@@ -92,6 +92,10 @@ class HRMigration extends DrupalNode7Migration {
     return $this->translateTerms($value, 'hr_location');
   }
 
+  protected function fieldFundings($value) {
+    return $this->translateTerms($value, 'hr_funding_type');
+  }
+
   protected function fieldJobTitle($value) {
     return $this->translateTerms($value, 'hr_job_title');
   }
@@ -211,8 +215,9 @@ class HRProfile2Migration extends HRMigration {
       'field_social_media:attributes',
       'field_social_media:language',
     ));
-    $this->addSimpleMappings(array('field_last_name', 'field_first_name', 'field_phones', 'field_phones:countrycode', 'field_phones:extension'));
-    $this->addFieldMapping('field_phones:numbertype', 'field_phones:number');
+    $this->addSimpleMappings(array('field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension'));
+    $this->addFieldMapping('field_phones', 'field_phones:number');
+    $this->addFieldMapping('field_phones:numbertype', 'field_phones');
     $this->addFieldMapping('field_emails', 'field_emails_other');
     $this->addFieldMapping('field_organizations_other', 'field_oganization_other');
     $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
@@ -237,6 +242,42 @@ class HRProfile2Migration extends HRMigration {
     }
 
     $this->version->getSourceValues($row, $row->pid);
+  }
+
+  public function prepare($entity, $row) {
+    if (empty($entity->uid)) {
+      if (!empty($row->field_email[0])) {
+        $user = user_load_by_mail($row->field_email[0]);
+        if (empty($user)) {
+          // Create user account
+          $account = new stdClass();
+          $account->is_new = TRUE;
+          $account->mail = $row->field_email[0];
+          $account->status = 1;
+          $name = preg_replace('/@.*$/', '', $row->field_email[0]);
+          $account->name = email_registration_unique_username($name);
+          $user = user_save($account);
+          if (!empty($user->uid)) {
+            $entity->uid = $user->uid;
+          }
+          else {
+            debug('Could not create user for '.$row->field_email[0]);
+          }
+        }
+        else {
+          $entity->uid = $user->uid;
+        }
+      }
+      else {
+        debug("Could not assign UID");
+      }
+    }
+  }
+
+  public function complete($entity, $row) {
+    $user = user_load($entity->uid);
+    // Resave user to update user realname
+    user_save($user);
   }
 
 }
@@ -273,6 +314,7 @@ class HRDocumentMigration extends HRMigration {
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
     $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
   }
@@ -305,6 +347,7 @@ class HRNewsMigration extends HRMigration {
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
 
     $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files');
     $this->addFieldMapping('field_image:alt', 'field_news_image:alt');
@@ -345,6 +388,7 @@ class HREventsMigration extends HRMigration {
     $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
     $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
+    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
 
     $this->addFieldMapping('field_address', 'field_event_address');
     $this->addFieldMapping('field_address:administrative_area', 'field_event_address:administrative_area');
