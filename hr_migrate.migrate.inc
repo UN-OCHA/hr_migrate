@@ -214,6 +214,7 @@ class HRProfile2Migration extends HRMigration {
       'field_social_media:title',
       'field_social_media:attributes',
       'field_social_media:language',
+      'field_location',
     ));
     $this->addSimpleMappings(array('field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension'));
     $this->addFieldMapping('field_phones', 'field_phones:number');
@@ -245,6 +246,8 @@ class HRProfile2Migration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
+    // Make sure locations are not added
+    $entity->field_location = array();
     if (empty($entity->uid)) {
       if (!empty($row->field_email[0])) {
         $user = user_load_by_mail($row->field_email[0]);
