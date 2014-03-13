@@ -415,6 +415,10 @@ class HRDocumentMigration extends HRMigration {
       'field_publication_date:to',
       'field_files_collection',
     ));
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_publication_date', 'field_publication_date');
     $this->addFieldMapping('field_publication_date:timezone')
@@ -451,6 +455,10 @@ class HRNewsMigration extends HRMigration {
     $this->addUnmigratedDestinations(array(
       'field_organizations',
     ));
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
@@ -493,6 +501,10 @@ class HREventsMigration extends HRMigration {
     $this->addUnmigratedDestinations(array(
       'field_organizations',
     ));
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
