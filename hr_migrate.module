@@ -103,7 +103,7 @@ function hr_migrate_register_migrations() {
   // and destination_type are required arguments.
   $node_arguments = array(
     array(
-      'class_name' => 'DrupalNode7Migration',
+      'class_name' => 'HRPagesMigration',
       'description' => t('Migration of pages'),
       'machine_name' => 'hr_pages',
       'source_type' => 'page',

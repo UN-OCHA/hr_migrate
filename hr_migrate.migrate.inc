@@ -129,6 +129,13 @@ class HRMigration extends DrupalNode7Migration {
     }
   }
 
+  public function complete($entity, $row) {
+    if (!empty($entity->og_group_ref)) {
+      // Use pathauto
+      $entity->path['pathauto'] = TRUE;
+      node_save($entity);
+    }
+  }
 
 }
 
@@ -284,6 +291,109 @@ class HRProfile2Migration extends HRMigration {
   }
 
 }
+
+class HRPagesMigration extends HRMigration {
+
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+    $this->addFieldMapping('title_field', 'title_field');
+    $this->addFieldMapping('title_field:language', 'language')->defaultValue('en');
+  }
+
+  public function prepare($entity, $row) {
+    $valid_paths = array(
+      'coordination/humanitarian-leadership' => 'Humanitarian Leadership',
+      'themes/gencap' => 'GenCap',
+      'themes/procap' => 'ProCap',
+      'themes/accountability-to-affected-people' => 'Accountability to Affected People',
+      'themes/age' => 'Age',
+      'themes/environment' => 'Environment',
+      'themes/gender' => 'Gender',
+    );
+    foreach ($valid_paths as $path => $space_title) {
+      if (strpos($row->path, $path) !== FALSE) {
+        $space = NULL;
+        // Get space id
+        $query = new EntityFieldQuery();
+        $entities = $query
+          ->entityCondition('entity_type', 'node')
+          ->entityCondition('bundle', 'hr_space')
+          ->propertyCondition('title', $space_title)
+          ->execute();
+        if (!empty($entities['node'])) {
+          if (count($entities['node']) == 1) {
+            $space = reset(array_keys($entities['node']));
+          }
+        }
+        if (!empty($space)) {
+          $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $space;
+        }
+      }
+    }
+  }
+
+  public function complete($entity, $row) {
+    if (!empty($entity->og_group_ref)) {
+      // Use pathauto
+      $entity->path['pathauto'] = TRUE;
+      node_save($entity);
+      // Add group menu items
+      $items['Humanitarian Leadership'] = array(
+        'HLSU Who and What We Do' => array('link_title' => 'Who we are and What we do', 'weight' => 0),
+        'HC Pool' => array('link_title' => 'HC Pool', 'weight' => 2),
+        'Level 3 HC Pool' => array('link_title' => 'Level 3 HC Pool', 'weight' => 4),
+        'Humanitarian Country Team Development' => array('link_title' => 'Humanitarian Country Team Development', 'weight' => 6),
+        'Learning Development' => array('link_title' => 'Learning Development', 'weight' => 8),
+      );
+
+      $items['GenCap'] = array(
+        'GenCap - What we do' => array('link_title' => 'What we do', 'weight' => 0),
+        'GenCap - Who we are' => array('link_title' => 'Who we are', 'weight' => 2),
+        'GenCap - Where we are' => array('link_title' => 'Where we are', 'weight' => 4),
+        'How to request a GenCap?' => array('link_title' => 'How to request a GenCap', 'weight' => 6),
+        'How to become a GenCap?' => array('link_title' => 'How to become a GenCap', 'weight' => 8),
+        'GenCap - Project Reports' => array('link_title' => 'Project Reports', 'weight' => 10),
+        'GenCap - Guidance' => array('link_title' => 'Guidance', 'weight' => 12),
+        'GenCap - Videos' => array('link_title' => 'Videos', 'weight' => 14),
+        'GenCap - Updates' => array('link_title' => 'Updates', 'weight' => 16),
+        'Online Training : Different Needs - Equal Opportunities - In English and French' => array('link_title' => 'Online course', 'weight' => 18),
+      );
+
+      $items['ProCap'] = array(
+        'ProCap - What we do' => array('link_title' => 'What we do', 'weight' => 0),
+        'ProCap - Who we are' => array('link_title' => 'Who we are', 'weight' => 2),
+        'ProCap - Where we are' => array('link_title' => 'Where we are', 'weight' => 4),
+        'ProCap - How to request a ProCap' => array('link_title' => 'How to request a ProCap', 'weight' => 6),
+        'ProCap - How to become a ProCap' => array('link_title' => 'How to become a ProCap', 'weight' => 8),
+        'Inter-Agency Protection Capacity Training' => array('link_title' => 'ProCap Training', 'weight' => 10),
+        'ProCap - Project Reports' => array('link_title' => 'Project Reports', 'weight' => 12),
+        'ProCap - Guidance' => array('link_title' => 'Guidance', 'weight' => 14),
+        'ProCap - Videos' => array('link_title' => 'Videos', 'weight' => 16),
+        'ProCap - Updates' => array('link_title' => 'Updates', 'weight' => 18),
+      );
+
+      $items['Gender'] = array(
+        'Training' => array('link_title' => 'Training', 'weight' => 0),
+        'The IASC Gender Marker' => array('link_title' => 'The IASC Gender Marker', 'weight' => 2),
+      );
+
+
+      $space_id = $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'];
+      $space = node_load($space_id);
+      if (isset($items[$space->title]) && isset($items[$space->title][$entity->title])) {
+        $menu_item = $items[$space->title][$entity->title];
+        $menus = og_menu_get_group_menus(array('node' => array($space->nid)));
+        if (!empty($menus)) {
+          $menu_item['menu_name'] = $menus[0]['menu_name'];
+          $menu_item['link_path'] = 'node/'.$entity->nid;
+          menu_link_save($menu_item);
+        }
+      }
+    }
+  }
+} 
 
 class HRDocumentMigration extends HRMigration {
   public function __construct(array $arguments) {
