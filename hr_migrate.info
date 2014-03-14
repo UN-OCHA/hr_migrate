@@ -6,6 +6,5 @@ core = 7.x
 dependencies[] = migrate
 dependencies[] = migrate_d2d
 dependencies[] = migrate_extras
-dependencies[] = migrate_ui
 
 files[] = hr_migrate.migrate.inc
