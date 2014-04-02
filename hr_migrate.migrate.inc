@@ -105,28 +105,50 @@ class HRMigration extends DrupalNode7Migration {
     if (!is_array($value)) {
       $value = array($value);
     }
-    $valid_spaces = array(
-      'Age',
-      'Environment',
-      'Gender',
-      'GenCap',
-      'Accountability to Affected Populations',
-      'ProCap',
-    );
-    $return  = array();
-    $index = NULL;
-    foreach ($value as $i => $val) {
-      $term_name = $this->getLegacyTermName($val);
-      if (in_array($term_name, $valid_spaces)) {
-          $index = $i;
+    if ($this->arguments['source_connection'] == 'www') {
+      $valid_spaces = array(
+        'Age',
+        'Environment',
+        'Gender',
+        'GenCap',
+        'Accountability to Affected Populations',
+        'ProCap',
+      );
+      $return  = array();
+      $index = NULL;
+      foreach ($value as $i => $val) {
+        $term_name = $this->getLegacyTermName($val);
+        if (in_array($term_name, $valid_spaces)) {
+            $index = $i;
+        }
+      }
+      if ($index !== NULL) {
+        return $this->translateNodes($value[$index], 'hr_space');
+      }
+      else {
+        return NULL;
       }
     }
-    if ($index !== NULL) {
-      return $this->translateNodes($value[$index], 'hr_space');
+  }
+
+  protected function getSpace() {
+    $target_id = NULL;
+    $groups = array(
+      'clusters' => 'Clusters',
+      'imwg' => 'Information Management Working Group',
+    );
+    $query = new EntityFieldQuery();
+    $entities = $query
+      ->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'hr_space')
+      ->propertyCondition('title', $groups[$this->arguments['source_connection']])
+      ->execute();
+    if (!empty($entities['node'])) {
+      if (count($entities['node']) == 1) {
+        $target_id = reset(array_keys($entities['node']));
+      }
     }
-    else {
-      return NULL;
-    }
+    return $target_id;
   }
 
   public function complete($entity, $row) {
@@ -137,6 +159,31 @@ class HRMigration extends DrupalNode7Migration {
     }
   }
 
+  protected function redirect($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www' && isset($entity->path['alias'])) {
+      $redirect = new stdClass();
+      $redirect->source = $row->path;
+      $redirect->redirect = 'https://www.humanitarianresponse.info/'.drupal_get_path_alias('node/'.$entity->nid);
+      $redirect->language = LANGUAGE_NONE;
+      $redirect->source_options = array();
+      Database::getConnection('default', $this->sourceConnection)
+        ->insert('redirect')
+        ->fields(array(
+          'hash' => redirect_hash($redirect),
+          'type' => 'redirect',
+          'uid' => 1,
+          'source' => $redirect->source,
+          'source_options' => serialize(array()),
+          'redirect' => $redirect->redirect,
+          'redirect_options' => serialize(array()),
+          'language' => LANGUAGE_NONE,
+          'status_code' => 0,
+          'count' => 0,
+          'access' => 0,
+        ))
+        ->execute();
+    }
+  }
 }
 
 /**
@@ -303,34 +350,39 @@ class HRPagesMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    $valid_paths = array(
-      'coordination/humanitarian-leadership' => 'Humanitarian Leadership',
-      'themes/gencap' => 'GenCap',
-      'themes/procap' => 'ProCap',
-      'themes/accountability-to-affected-people' => 'Accountability to Affected People',
-      'themes/age' => 'Age',
-      'themes/environment' => 'Environment',
-      'themes/gender' => 'Gender',
-    );
-    foreach ($valid_paths as $path => $space_title) {
-      if (strpos($row->path, $path) !== FALSE) {
-        $space = NULL;
-        // Get space id
-        $query = new EntityFieldQuery();
-        $entities = $query
-          ->entityCondition('entity_type', 'node')
-          ->entityCondition('bundle', 'hr_space')
-          ->propertyCondition('title', $space_title)
-          ->execute();
-        if (!empty($entities['node'])) {
-          if (count($entities['node']) == 1) {
-            $space = reset(array_keys($entities['node']));
+    if ($this->arguments['source_connection'] == 'www') {
+      $valid_paths = array(
+        'coordination/humanitarian-leadership' => 'Humanitarian Leadership',
+        'themes/gencap' => 'GenCap',
+        'themes/procap' => 'ProCap',
+        'themes/accountability-to-affected-people' => 'Accountability to Affected People',
+        'themes/age' => 'Age',
+        'themes/environment' => 'Environment',
+        'themes/gender' => 'Gender',
+      );
+      foreach ($valid_paths as $path => $space_title) {
+        if (strpos($row->path, $path) !== FALSE) {
+          $space = NULL;
+          // Get space id
+          $query = new EntityFieldQuery();
+          $entities = $query
+            ->entityCondition('entity_type', 'node')
+            ->entityCondition('bundle', 'hr_space')
+            ->propertyCondition('title', $space_title)
+            ->execute();
+          if (!empty($entities['node'])) {
+            if (count($entities['node']) == 1) {
+              $space = reset(array_keys($entities['node']));
+            }
+          }
+          if (!empty($space)) {
+            $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $space;
           }
         }
-        if (!empty($space)) {
-          $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $space;
-        }
       }
+    }
+    else {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
     }
   }
 
@@ -392,6 +444,7 @@ class HRPagesMigration extends HRMigration {
         }
       }
     }
+    $this->redirect($entity, $row);
   }
 } 
 
@@ -433,9 +486,20 @@ class HRDocumentMigration extends HRMigration {
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
-    $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    if ($this->arguments['source_connection'] == 'www') {
+      $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    }
   }
 
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    $this->redirect($entity, $row);
+  }
 }
 
 /*
@@ -445,7 +509,12 @@ class HRNewsMigration extends HRMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
-    $this->dependencies[] = 'hr_files';
+    if ($this->arguments['source_connection'] == 'www') {
+      $this->dependencies[] = 'hr_files';
+    }
+    else {
+      $this->dependencies[] = 'hr_files_'.$this->arguments['source_connection'];
+    }
 
     $this->addUnmigratedSources(array(
       'field_page',
@@ -467,7 +536,9 @@ class HRNewsMigration extends HRMigration {
     $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
-    $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    if ($this->arguments['source_connection'] == 'www') {
+      $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    }
     $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
 
     $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files');
@@ -475,6 +546,17 @@ class HRNewsMigration extends HRMigration {
     $this->addFieldMapping('field_image:title', 'field_news_image:title');
     $this->addFieldMapping('field_image:file_class')->defaultValue('MigrateFileFid');
   }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    $this->redirect($entity, $row);
+  }
+
 
 }
 
@@ -542,12 +624,24 @@ class HREventsMigration extends HRMigration {
 
     $this->addFieldMapping('field_event_category', 'field_event_category')->callbacks(array($this, 'fieldEventCategory'));
 
-    $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    if ($this->arguments['source_connection'] == 'www') {
+      $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+    }
     
   }
 
   protected function fieldEventCategory($value) {
     return $this->translateTerms($value, 'hr_event_category');
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    $this->redirect($entity, $row);
   }
 
 }
@@ -559,8 +653,17 @@ class HREventsMigration extends HRMigration {
 class HRFilesCollectionMigration extends DrupalMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
-    $this->dependencies[] = 'hr_documents';
-    $this->dependencies[] = 'hr_files';
+
+    $documents_migration = 'hr_documents';
+    $files_migration = 'hr_files';
+
+    if ($this->arguments['source_connection'] != 'www') {
+      $documents_migration = 'hr_documents_'.$this->arguments['source_connection'];
+      $files_migration = 'hr_files_'.$this->arguments['source_connection'];
+    }
+
+    $this->dependencies[] = $documents_migration;
+    $this->dependencies[] = $files_migration;
 
     $this->sourceFields += $this->version->getSourceFields('field_collection_item', 'field_document_files');
 
@@ -586,11 +689,11 @@ class HRFilesCollectionMigration extends DrupalMigration {
     $this->addUnmigratedSources(array('language'));
 
     $this->addFieldMapping('host_entity_id', 'entity_id')
-      ->sourceMigration('hr_documents');
+      ->sourceMigration($documents_migration);
 
     $this->addFieldMapping('field_language', 'field_file_languages');
 
-    $this->addFieldMapping('field_file', 'field_document_files_file')->sourceMigration('hr_files');
+    $this->addFieldMapping('field_file', 'field_document_files_file')->sourceMigration($files_migration);
     $this->addFieldMapping('field_file:display', 'field_document_files_file:display');
     $this->addFieldMapping('field_file:description', 'field_document_files_file:description');
     $this->addFieldMapping('field_file:file_class')->defaultValue('MigrateFileFid');
@@ -609,6 +712,10 @@ class HRFilesCollectionMigration extends DrupalMigration {
       return FALSE;
     }
     $this->version->getSourceValues($row, $row->field_document_files_value);
+  }
+
+  protected function fieldLanguage($value) {
+    return $value[0];
   }
 
 }
