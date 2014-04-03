@@ -498,6 +498,7 @@ class HRDocumentMigration extends HRMigration {
   }
 
   public function complete($entity, $row) {
+    parent::complete($entity, $row);
     $this->redirect($entity, $row);
   }
 }
@@ -554,6 +555,7 @@ class HRNewsMigration extends HRMigration {
   }
 
   public function complete($entity, $row) {
+    parent::complete($entity, $row);
     $this->redirect($entity, $row);
   }
 
@@ -641,6 +643,7 @@ class HREventsMigration extends HRMigration {
   }
 
   public function complete($entity, $row) {
+    parent::complete($entity, $row);
     $this->redirect($entity, $row);
   }
 
