@@ -539,10 +539,13 @@ class HRNewsMigration extends HRMigration {
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     if ($this->arguments['source_connection'] == 'www') {
       $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
+      $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files');
+    }
+    else {
+      $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files_'.$this->arguments['source_connection']);
     }
     $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
 
-    $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files');
     $this->addFieldMapping('field_image:alt', 'field_news_image:alt');
     $this->addFieldMapping('field_image:title', 'field_news_image:title');
     $this->addFieldMapping('field_image:file_class')->defaultValue('MigrateFileFid');
