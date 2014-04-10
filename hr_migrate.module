@@ -14,15 +14,17 @@ function hr_migrate_flush_caches() {
 }
 
 function hr_migrate_register_migrations() {
-  hr_migrate_register_site_migration('www', 'www.humanitarianresponse.info');
-  hr_migrate_register_site_migration('clusters', 'clusters.humanitarianresponse.info');
-  hr_migrate_register_site_migration('imwg', 'imwg.humanitarianresponse.info');
+  $common = array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event');
+  hr_migrate_register_site_migration('www', 'www.humanitarianresponse.info', $common);
+  hr_migrate_register_site_migration('clusters', 'clusters.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
+  hr_migrate_register_site_migration('imwg', 'imwg.humanitarianresponse.info', $common);
+  hr_migrate_register_site_migration('ir', 'ir.humanitarianresponse.info', array('hr_page', 'hr_indicator'));
 }
 
 /**
  * Register all D6->D7 migrations.
  */
-function hr_migrate_register_site_migration($source_connection, $site) {
+function hr_migrate_register_site_migration($source_connection, $site, $content_types) {
   $machine_name = '_' . $source_connection;
   if ($machine_name == '_www') {
     $machine_name = '';
@@ -57,14 +59,18 @@ function hr_migrate_register_site_migration($source_connection, $site) {
     'user_migration' => 'hr_users'.$machine_name,
   );
 
-  Migration::registerMigration('HRProfile2Migration', $profile_arguments['machine_name'], $profile_arguments);
+  if (in_array('profile', $content_types)) {
+    Migration::registerMigration('HRProfile2Migration', $profile_arguments['machine_name'], $profile_arguments);
+  }
 
-  $fc_arguments = $common_arguments + array(
-    'description' => t('Migration of field collections'),
-    'machine_name' => 'hr_field_collections'.$machine_name,
-  );
+  if (in_array('hr_document', $content_types)) {
+    $fc_arguments = $common_arguments + array(
+      'description' => t('Migration of field collections'),
+      'machine_name' => 'hr_field_collections'.$machine_name,
+    );
 
-  Migration::registerMigration('HRFilesCollectionMigration', $fc_arguments['machine_name'], $fc_arguments);
+    Migration::registerMigration('HRFilesCollectionMigration', $fc_arguments['machine_name'], $fc_arguments);
+  }
 
   $files_arguments = $common_arguments + array(
     'description' => t('Migration of files'),
@@ -108,7 +114,15 @@ function hr_migrate_register_site_migration($source_connection, $site) {
       'source_type' => 'event',
       'destination_type' => 'hr_event',
     ),
+    array(
+      'class_name' => 'HRIndicatorsMigration',
+      'description' => t('Migration of indicators'),
+      'machine_name' => 'hr_indicators'.$machine_name,
+      'source_type' => 'indicator',
+      'destination_type' => 'hr_indicator',
+    ),
   );
+
   // Tell the node migrations where the users are coming from, so they can
   // set up the dependency and resolve D6->D7 uids.
   $common_node_arguments = $common_arguments + array(
@@ -122,8 +136,10 @@ function hr_migrate_register_site_migration($source_connection, $site) {
   );
   foreach ($node_arguments as $arguments) {
     $arguments = array_merge_recursive($arguments, $common_node_arguments);
-    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+    if (in_array($arguments['destination_type'], $content_types)) {
+      Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
                                  $arguments);
+    }
   }
 
 }

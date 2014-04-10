@@ -136,6 +136,7 @@ class HRMigration extends DrupalNode7Migration {
     $groups = array(
       'clusters' => 'Clusters',
       'imwg' => 'Information Management Working Group',
+      'ir' => 'Indicators Registry',
     );
     $query = new EntityFieldQuery();
     $entities = $query
@@ -785,3 +786,49 @@ class HRFileMigration extends DrupalFile7Migration {
     return $base.$result;
   }
 }
+
+class HRIndicatorsMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $this->addSimpleMappings(array('title_field', 'field_ind_code', 'field_ind_comments', 'field_ind_data_sources', 'field_ind_denominator', 'field_ind_disaggregation', 'field_ind_general_guidance',
+      'field_ind_guidance_phases', 'field_ind_key', 'field_ind_numerator', 'field_ind_response', 'field_ind_unit_desc', 'field_ind_guidance_baseline', 'field_ind_threshold'));
+
+    $this->addFieldMapping('field_sector', 'field_cluster')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_ind_domain', 'field_ind_domain')->callbacks(array($this, 'fieldIndDomain'));
+    $this->addFieldMapping('field_ind_standards', 'field_ind_standards')->callbacks(array($this, 'fieldIndStandards'));
+    $this->addFieldMapping('field_ind_types', 'field_ind_types')->callbacks(array($this, 'fieldIndTypes'));
+    $this->addFieldMapping('field_ind_unit', 'field_ind_unit')->callbacks(array($this, 'fieldIndUnit'));
+    $this->addFieldMapping('field_ind_cross_tagging', 'field_cross_tagging')->callbacks(array($this, 'fieldIndDomain'));
+
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
+
+  protected function fieldIndDomain($value) {
+    return $this->translateTerms($value, 'hr_indicator_domain');
+  }
+
+  protected function fieldIndStandards($value) {
+    return $this->translateTerms($value, 'hr_indicator_standard');
+  }
+
+  protected function fieldIndTypes($value) {
+    return $this->translateTerms($value, 'hr_indicator_type');
+  }
+
+  protected function fieldIndUnit($value) {
+    return $this->translateTerms($value, 'hr_indicator_unit');
+  }
+
+}
+
