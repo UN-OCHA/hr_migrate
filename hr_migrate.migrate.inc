@@ -137,11 +137,16 @@ class HRMigration extends DrupalNode7Migration {
       'clusters' => 'Clusters',
       'imwg' => 'Information Management Working Group',
       'ir' => 'Indicators Registry',
+      'er' => 'Early Recovery',
     );
+    $type = 'hr_space';
+    if ($this->arguments['source_connection'] == 'er') {
+      $type = 'hr_sector';
+    }
     $query = new EntityFieldQuery();
     $entities = $query
       ->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', 'hr_space')
+      ->entityCondition('bundle', $type)
       ->propertyCondition('title', $groups[$this->arguments['source_connection']])
       ->execute();
     if (!empty($entities['node'])) {

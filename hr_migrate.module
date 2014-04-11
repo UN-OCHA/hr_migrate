@@ -19,6 +19,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('clusters', 'clusters.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
   hr_migrate_register_site_migration('imwg', 'imwg.humanitarianresponse.info', $common);
   hr_migrate_register_site_migration('ir', 'ir.humanitarianresponse.info', array('hr_page', 'hr_indicator'));
+  hr_migrate_register_site_migration('er', 'er.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
 }
 
 /**
