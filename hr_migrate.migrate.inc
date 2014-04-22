@@ -36,6 +36,14 @@ class HRMigration extends DrupalNode7Migration {
         debug('Could not find term with tid '.$val.' in legacy database');
       }
     }
+
+    if ($this->arguments['source_connection'] == 'assessments' && $vocabulary == 'hr_theme') {
+      $terms = taxonomy_get_term_by_name('Needs Assessment', $vocabulary);
+      if (!empty($terms)) {
+        $keys = array_keys($terms);
+        $return[] = reset($keys);
+      }
+    }
     return $return;
   }
 
@@ -46,6 +54,9 @@ class HRMigration extends DrupalNode7Migration {
     $return  = array();
     foreach ($value as $i => $val) {
       $term_name = $this->getLegacyTermName($val);
+      if ($term_name == 'Child Protection') {
+        $term_name = 'Protection';
+      }
       if (!empty($term_name)) {
         $query = new EntityFieldQuery();
         $entities = $query
@@ -138,6 +149,7 @@ class HRMigration extends DrupalNode7Migration {
       'imwg' => 'Information Management Working Group',
       'ir' => 'Indicators Registry',
       'er' => 'Early Recovery',
+      'assessments' => 'Humanitarian Programme Cycle',
     );
     $type = 'hr_space';
     if ($this->arguments['source_connection'] == 'er') {
@@ -743,7 +755,7 @@ class HRFileMigration extends DrupalFile7Migration {
     $this->removeFieldMapping('value');
     $this->removeFieldMapping('destination_file');
     $this->addFieldMapping('destination_file', 'filename');
-    $this->addFieldMapping('value', 'filename');
+    $this->addFieldMapping('value', 'uri')->callbacks(array($this, 'fileValue'));
 
     $this->removeFieldMapping('destination_dir');
     $this->addFieldMapping('destination_dir', 'uri')->callbacks(array($this, 'destinationDir'));
@@ -790,6 +802,17 @@ class HRFileMigration extends DrupalFile7Migration {
     $result = implode('/', $results);
     return $base.$result;
   }
+
+  protected function fileValue($uri) {
+    if (strpos($uri, 'public://') !== FALSE) {
+      $result = str_replace('public://', '', $uri);
+    }
+    else {
+      $result = str_replace('private://', '', $uri);
+    }
+    $results = explode('/', $result);
+    return array_pop($results);
+  }
 }
 
 class HRIndicatorsMigration extends HRMigration {
@@ -833,6 +856,50 @@ class HRIndicatorsMigration extends HRMigration {
 
   protected function fieldIndUnit($value) {
     return $this->translateTerms($value, 'hr_indicator_unit');
+  }
+
+}
+
+
+class HRTrainingsMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
+    $this->addFieldMapping('title_field', 'title_field');
+    $dummy = array();
+    $themes = $this->fieldThemes($dummy);
+    $this->addFieldMapping('field_themes')->defaultValue($themes);
+
+    $this->addFieldMapping('field_event_date', 'field_training_date');
+    $this->addFieldMapping('field_event_date:to', 'field_training_date:value2');
+    $this->addFieldMapping('field_event_date:timezone')->defaultValue(date_default_timezone_get());
+    $dummy = 2;
+    $this->addFieldMapping('field_event_category')->defaultValue($this->fieldEventCategory($dummy));
+
+
+  }
+
+  protected function fieldEventCategory($value) {
+    $terms = taxonomy_get_term_by_name('Trainings', 'hr_event_category');
+   if (!empty($terms)) {
+     $keys = array_keys($terms);
+     $return = reset($keys);
+     return $return;
+   }
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
   }
 
 }

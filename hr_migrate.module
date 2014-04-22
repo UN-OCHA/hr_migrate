@@ -20,6 +20,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('imwg', 'imwg.humanitarianresponse.info', $common);
   hr_migrate_register_site_migration('ir', 'ir.humanitarianresponse.info', array('hr_page', 'hr_indicator'));
   hr_migrate_register_site_migration('er', 'er.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
+  hr_migrate_register_site_migration('assessments', 'assessments.humanitarianresponse.info', array('hr_document'));
 }
 
 /**
@@ -141,6 +142,18 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
       Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
                                  $arguments);
     }
+  }
+
+  if ($source_connection == 'assessments') {
+    $node_arguments = array(
+      'class_name' => 'HRTrainingsMigration',
+      'description' => t('Migration of trainings'),
+      'machine_name' => 'hr_trainings'.$machine_name,
+      'source_type' => 'training',
+      'destination_type' => 'hr_event',
+    );
+    $arguments = array_merge_recursive($node_arguments, $common_node_arguments);
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'], $arguments);
   }
 
 }
