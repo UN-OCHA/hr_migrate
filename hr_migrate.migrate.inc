@@ -150,6 +150,7 @@ class HRMigration extends DrupalNode7Migration {
       'ir' => 'Indicators Registry',
       'er' => 'Early Recovery',
       'assessments' => 'Humanitarian Programme Cycle',
+      'cod' => 'Data',
     );
     $type = 'hr_space';
     if ($this->arguments['source_connection'] == 'er') {
@@ -900,6 +901,172 @@ class HRTrainingsMigration extends HRMigration {
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $this->redirect($entity, $row);
+  }
+
+}
+
+class HRDatasetsMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $files_migration = 'hr_files_cod';
+    $this->dependencies[] = 'hr_files_cod';
+
+    $this->removeFieldMapping('body');
+    $this->removeFieldMapping('body:summary');
+    $this->removeFieldMapping('body:format');
+    $this->removeFieldMapping('body:language');
+
+    $this->addFieldMapping('field_ds_instructions', 'field_instructions');
+    $this->addFieldMapping('field_ds_instructions:format', 'field_instructions:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_ds_abstract', 'field_abstract');
+    $this->addFieldMapping('field_ds_abstract:format', 'field_abstract:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_ds_recent_changes', 'field_recent_changes');
+    $this->addFieldMapping('field_ds_recent_changes:format', 'field_recent_changes:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_locations', 'field_country_region')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_dataset_categories', 'field_category')->callbacks(array($this, 'fieldDatasetCategory'));
+    $this->addFieldMapping('field_dataset_types', 'field_data_type')->callbacks(array($this, 'fieldDatasetType'));
+    $this->addFieldMapping('field_languages', 'field_language')->callbacks(array($this, 'fieldDatasetLanguage'));
+    $this->addFieldMapping('field_ds_date', 'field_dataset_date')->callbacks(array($this, 'fieldDatasetDate'));
+    $this->addFieldMapping('field_ds_date:timezone')->defaultValue(date_default_timezone_get());
+    //$this->addFieldMapping('field_ds_date')->defaultValue('2001-01-01');
+    $this->addFieldMapping('field_ds_datasources', 'field_data_source_s_');
+    $this->addFieldMapping('field_ds_datasources:format', 'field_data_source_s_:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_ds_summary', 'field_summary');
+    $this->addFieldMapping('field_ds_summary:format', 'field_summary:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_terms_of_use', 'field_terms_of_use');
+    $this->addFieldMapping('field_terms_of_use:format', 'field_terms_of_use:format')->callbacks(array($this, 'mapFormat'));
+    $this->addFieldMapping('field_email', 'field_contact_point')->callbacks(array($this, 'fieldDatasetEmail'));
+
+    $this->addFieldMapping('field_ds_files', 'field_dataset_file')->sourceMigration($files_migration);
+    $this->addFieldMapping('field_ds_files:display', 'field_dataset_file:display');
+    $this->addFieldMapping('field_ds_files:description', 'field_dataset_file:description');
+    $this->addFieldMapping('field_ds_files:file_class')->defaultValue('MigrateFileFid');
+
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity_id = 0;
+      $tid = $row->field_country_region[0];
+      $term_name = $this->getLegacyTermName($tid);
+      switch ($term_name) {
+        case "Korea, Democratic People's Republic of":
+          $term_name = 'North Korea';
+          break;
+        case 'Palestinian Territory, Occupied':
+          $term_name = 'State of Palestine';
+          break;
+        case "Lao People's Democratic Republic":
+          $term_name = 'Lao';
+          break;
+        case 'Congo, The Democratic Republic of the':
+          $term_name = 'Democratic Republic of the Congo';
+          break;
+        case 'Dominican Republic (the)':
+          $term_name = 'Dominican Republic';
+          break;
+        case 'Syrian Arab Republic':
+          $term_name = 'Syria';
+          break;
+        case 'Guinea-Bissau':
+          $term_name = 'Guinea Bissau';
+          break;
+      }
+      $query = new EntityFieldQuery();
+      $entities = $query
+        ->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'hr_operation')
+        ->propertyCondition('title', $term_name)
+        ->execute();
+      if (!empty($entities['node'])) {
+        if (count($entities['node']) == 1) {
+          $entity_id = reset(array_keys($entities['node']));
+        }
+      }
+      if ($entity_id) {
+       $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $entity_id;
+      }
+      else {
+        debug('Could not find operation with title '.$term_name);
+        $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+      }
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
+
+  protected function fieldDatasetCategory($value) {
+    return $this->translateTerms($value, 'hr_dataset_category');
+  }
+
+  protected function fieldDatasetType($value) {
+    return $this->translateTerms($value, 'hr_dataset_type');
+  }
+
+  protected function fieldDatasetLanguage($value) {
+    $out = array();
+    foreach ($value as $val) {
+      $term = $this->getLegacyTermName($val);
+      switch ($term) {
+        case 'English':
+          $out[] = 'en';
+          break;
+        case 'French':
+          $out[] = 'fr';
+          break;
+        case 'Spanish':
+          $out[] = 'es';
+          break;
+        case 'Arabic':
+          $out[] = 'ar';
+          break;
+        case 'Russian':
+          $out[] = 'ru';
+          break;
+        case 'Other':
+          debug('Other');
+          break;
+      }
+    }
+    return $out;
+  }
+
+  protected function fieldDatasetDate($value) {
+    $pattern = '/^\d{4}$/';
+    $out = array();
+    foreach ($value as $val) {
+      if (preg_match($pattern, $val)) {
+        $val .= '-01-01';
+      }
+      $time = strtotime($val);
+      if ($time === FALSE) {
+        debug('Could not parse '.$val);
+      }
+      else {
+        $out[] = date('Y-m-d', $time);
+      }
+    }
+    return $out;
+  }
+
+  protected function fieldDatasetEmail($value) {
+    $pattern = '/[a-z\d._%+-]+@[a-z\d.-]+\.[a-z]{2,4}\b/i';
+    $out = array();
+    foreach ($value as $val) {
+      $matches = array();
+      if (preg_match_all($pattern, $val, $matches) > 0) {
+        $out[] = $matches[0];
+      }
+    }
+    if (empty($out)) {
+      debug('Could not find email in '.$val);
+      $out[] = 'data@humanitarianresponse.info';
+    }
+    return $out;
   }
 
 }

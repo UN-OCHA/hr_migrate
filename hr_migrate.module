@@ -21,6 +21,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('ir', 'ir.humanitarianresponse.info', array('hr_page', 'hr_indicator'));
   hr_migrate_register_site_migration('er', 'er.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
   hr_migrate_register_site_migration('assessments', 'assessments.humanitarianresponse.info', array('hr_document'));
+  hr_migrate_register_site_migration('cod', 'cod.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_dataset'));
 }
 
 /**
@@ -122,6 +123,13 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
       'machine_name' => 'hr_indicators'.$machine_name,
       'source_type' => 'indicator',
       'destination_type' => 'hr_indicator',
+    ),
+    array(
+      'class_name' => 'HRDatasetsMigration',
+      'description' => t('Migration of datasets'),
+      'machine_name' => 'hr_datasets'.$machine_name,
+      'source_type' => 'dataset',
+      'destination_type' => 'hr_dataset',
     ),
   );
 
