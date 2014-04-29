@@ -972,6 +972,9 @@ class HRDatasetsMigration extends HRMigration {
         case 'Guinea-Bissau':
           $term_name = 'Guinea Bissau';
           break;
+        case 'Tanzania, United Republic of':
+          $term_name = 'Tanzania';
+          break;
       }
       $query = new EntityFieldQuery();
       $entities = $query
