@@ -40,14 +40,14 @@ class HRMigration extends DrupalNode7Migration {
     if ($this->arguments['source_connection'] == 'assessments' && $vocabulary == 'hr_theme') {
       $terms = taxonomy_get_term_by_name('Needs Assessment', $vocabulary);
       if (!empty($terms)) {
-        $keys = array_keys($terms);
+       $keys = array_keys($terms);
         $return[] = reset($keys);
       }
     }
     return $return;
   }
 
-  protected function translateNodes($value, $type) {
+  protected function translateNodes($value, $type, $gid = NULL) {
     if (!is_array($value)) {
       $value = array($value);
     }
@@ -59,11 +59,14 @@ class HRMigration extends DrupalNode7Migration {
       }
       if (!empty($term_name)) {
         $query = new EntityFieldQuery();
-        $entities = $query
+        $query
           ->entityCondition('entity_type', 'node')
           ->entityCondition('bundle', $type)
-          ->propertyCondition('title', $term_name)
-          ->execute();
+          ->propertyCondition('title', $term_name);
+        if ($gid) {
+          $query->fieldCondition('og_group_ref', 'target_id', $gid, '=');
+        }
+        $entities = $query->execute();
         if (!empty($entities['node'])) {
           if (count($entities['node']) == 1) {
             $return[$i] = reset(array_keys($entities['node']));
@@ -97,6 +100,11 @@ class HRMigration extends DrupalNode7Migration {
 
   protected function fieldSectors($value) {
     return $this->translateNodes($value, 'hr_sector');
+  }
+
+  protected function fieldBundles($value) {
+    $gid = $this->getSpace();
+    return $this->translateNodes($value, 'hr_bundle', $gid);
   }
 
   protected function fieldLocations($value) {
@@ -156,11 +164,19 @@ class HRMigration extends DrupalNode7Migration {
     if ($this->arguments['source_connection'] == 'er') {
       $type = 'hr_sector';
     }
+    $title = $groups[$this->arguments['source_connection']];
+    $operations = array(
+      'ethiopia' => 'Ethiopia',
+    );
+    if (in_array($this->arguments['source_connection'], array_keys($operations))) {
+      $type = 'hr_operation';
+      $title = $operations[$this->arguments['source_connection']];
+    }
     $query = new EntityFieldQuery();
     $entities = $query
       ->entityCondition('entity_type', 'node')
       ->entityCondition('bundle', $type)
-      ->propertyCondition('title', $groups[$this->arguments['source_connection']])
+      ->propertyCondition('title', $title)
       ->execute();
     if (!empty($entities['node'])) {
       if (count($entities['node']) == 1) {
@@ -305,6 +321,7 @@ class HRProfile2Migration extends HRMigration {
     $query = Database::getConnection('default', $this->sourceConnection)
              ->select('profile', 'p')
              ->fields('p', array('pid', 'type', 'uid', 'label', 'created', 'changed'))
+             ->isNotNull('p.uid')
              ->orderBy('changed');
     return $query;
   }
@@ -1070,6 +1087,121 @@ class HRDatasetsMigration extends HRMigration {
       $out[] = 'data@humanitarianresponse.info';
     }
     return $out;
+  }
+
+}
+
+class HRContactsMigration extends HRMigration {
+
+  public function __construct(array $arguments) {
+    $arguments['destination_type'] = 'na'; // Destination type not used in this case
+    parent::__construct($arguments);
+
+    $fields = array(
+      'title',
+      'body',
+      'status',
+      'comment',
+      'promote',
+      'sticky',
+      'body:language',
+      'vid',
+      'is_new',
+      'revision',
+      'log',
+      'path',
+      'pathauto',
+      'body:summary',
+      'body:format',
+      'tnid',
+      'translate',
+      'language',
+    );
+
+    foreach ($fields as $field) {
+      $this->removeFieldMapping($field, $field);
+    }
+
+    $this->sourceFields += $this->version->getSourceFields('profile2', 'main');
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'pid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'alias' => 'p'
+        )
+      ),
+      MigrateDestinationProfile2::getKeySchema()
+    );
+
+    $this->highwaterField = array(
+      'name' => 'changed',
+      'alias' => 'p',
+      'type' => 'int',
+    );
+
+
+    $this->source = new MigrateSourceSQL($this->query(), $this->sourceFields, NULL, $this->sourceOptions);
+
+    $this->destination = new MigrateDestinationNode('hr_contact');
+    $this->addUnmigratedSources(array(
+      'field_salutation',
+      'path',
+      'pid',
+      'type',
+      'label',
+      'field_profile_privacy',
+      'field_country_you_work_in',
+      'field_other_contact_info',
+      'field_other_contact_info:revision_id',
+    ));
+    $this->addUnmigratedDestinations(array(
+      'field_skype_id',
+      'field_skype_id:language',
+      'field_job_title_other',
+      'field_job_title_other:language',
+      'field_social_media',
+      'field_social_media:title',
+      'field_social_media:attributes',
+      'field_social_media:language',
+      'field_locations',
+    ));
+    $this->addSimpleMappings(array('field_email', 'field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension'));
+    $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_phones', 'field_phones:number');
+    $this->addFieldMapping('field_phones:numbertype', 'field_phones');
+    $this->addFieldMapping('field_emails', 'field_emails_other');
+    $this->addFieldMapping('field_organizations_other', 'field_oganization_other');
+    $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
+    $this->addFieldMapping('field_job_title', 'field_job_title')->callbacks(array($this, 'fieldJobTitle'));
+    $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
+
+
+  }
+
+  public function query() {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('profile', 'p')
+             ->fields('p', array('pid', 'type', 'uid', 'label', 'created', 'changed'))
+             ->orderBy('changed');
+    return $query;
+  }
+
+  public function prepareRow($row) {
+    if (parent::prepareRow($row) === FALSE) {
+      return FALSE;
+    }
+
+    $this->version->getSourceValues($row, $row->pid);
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
   }
 
 }

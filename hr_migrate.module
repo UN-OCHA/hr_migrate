@@ -22,6 +22,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('er', 'er.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
   hr_migrate_register_site_migration('assessments', 'assessments.humanitarianresponse.info', array('hr_document'));
   hr_migrate_register_site_migration('cod', 'cod.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_dataset'));
+  hr_migrate_register_site_migration('ethiopia', 'ethiopia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact'));
 }
 
 /**
@@ -162,6 +163,16 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
     );
     $arguments = array_merge_recursive($node_arguments, $common_node_arguments);
     Migration::registerMigration($arguments['class_name'], $arguments['machine_name'], $arguments);
+  }
+
+  if (in_array('hr_contact', $content_types)) {
+    $contact_arguments = $common_arguments + array(
+      'description' => t('Migration of user profiles from '.$site),
+      'machine_name' => 'hr_contacts'.$machine_name,
+      'user_migration' => 'hr_users'.$machine_name,
+    );
+
+    Migration::registerMigration('HRContactsMigration', $contact_arguments['machine_name'], $contact_arguments);
   }
 
 }
