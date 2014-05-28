@@ -94,6 +94,11 @@ class HRMigration extends DrupalNode7Migration {
     return $this->translateTerms($value, 'hr_document_type');
   }
 
+  protected function fieldMapTypes($value) {
+    return $this->translateTerms($value, 'hr_infographic_type');
+  }
+
+
   protected function fieldOrganizations($value) {
     return $this->translateTerms($value, 'hr_organization');
   }
@@ -538,6 +543,59 @@ class HRDocumentMigration extends HRMigration {
     $this->redirect($entity, $row);
   }
 }
+
+/**
+ * Migration for infographics
+ */
+class HRInfographicMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $this->addUnmigratedSources(array(
+      'field_doc_thumbnail',
+      'field_doc_thumbnail:alt',
+      'field_doc_thumbnail:title',
+      'field_doc_thumbnail:width',
+      'field_doc_thumbnail:height',
+      'field_display_properties',
+    ));
+    $this->addUnmigratedDestinations(array(
+      'field_publication_date:rrule',
+      'field_publication_date:to',
+      'field_files_collection',
+    ));
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
+    $this->addFieldMapping('title_field', 'title_field');
+    $this->addFieldMapping('field_publication_date', 'field_publication_date');
+    $this->addFieldMapping('field_publication_date:timezone')
+      ->defaultValue(date_default_timezone_get());
+    $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
+    $this->addFieldMapping('field_infographic_type', 'field_map_type')->callbacks(array($this, 'fieldMapTypes'));
+    $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_related_content', 'field_linked_resources');
+    $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
+    $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
+    $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
+    $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
+}
+
 
 /*
  * Migration class for news 
@@ -1204,5 +1262,59 @@ class HRContactsMigration extends HRMigration {
     }
   }
 
+}
+
+/**
+ * Migration of assessments
+ */
+class HRAssessmentMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    /*$this->addUnmigratedSources(array(
+      'field_doc_thumbnail',
+      'field_doc_thumbnail:alt',
+      'field_doc_thumbnail:title',
+      'field_doc_thumbnail:width',
+      'field_doc_thumbnail:height',
+      'field_display_properties',
+    ));
+    $this->addUnmigratedDestinations(array(
+      'field_publication_date:rrule',
+      'field_publication_date:to',
+      'field_files_collection',
+    ));*/
+
+    $this->removeFieldMapping('body');
+    $this->removeFieldMapping('body:summary');
+    $this->removeFieldMapping('body:format');
+    $this->removeFieldMapping('body:language');
+
+    $this->addSimpleMappings(array('field_asst_other_location', 'field_asst_subject', 'field_asst_methodology', 'field_asst_key_findings', 'field_asst_unit', 'field_asst_collection_method',
+      'field_asst_sample_size', 'field_asst_freq', 'field_asst_status'));
+
+    $this->addFieldMapping('title_field', 'title_field');
+    $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
+    $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_related_content', 'field_linked_resources');
+    $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
+    $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
+    $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
+    $this->addFieldMapping('field_organizations2', 'field_asst_participating_org')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_asst_date', 'field_asst_start_date');
+    $this->addFieldMapping('field_asst_date:timezone')->defaultValue(date_default_timezone_get());
+  }
+
+  public function prepare($entity, $row) {
+    if ($this->arguments['source_connection'] != 'www') {
+      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
 }
 

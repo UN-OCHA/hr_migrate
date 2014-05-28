@@ -22,7 +22,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('er', 'er.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document'));
   hr_migrate_register_site_migration('assessments', 'assessments.humanitarianresponse.info', array('hr_document'));
   hr_migrate_register_site_migration('cod', 'cod.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_dataset'));
-  hr_migrate_register_site_migration('ethiopia', 'ethiopia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact'));
+  hr_migrate_register_site_migration('ethiopia', 'ethiopia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
 }
 
 /**
@@ -131,6 +131,20 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
       'machine_name' => 'hr_datasets'.$machine_name,
       'source_type' => 'dataset',
       'destination_type' => 'hr_dataset',
+    ),
+    array(
+      'class_name' => 'HRInfographicMigration',
+      'description' => t('Migration of visuals'),
+      'machine_name' => 'hr_infographics'.$machine_name,
+      'source_type' => 'map',
+      'destination_type' => 'hr_infographic',
+    ),
+    array(
+      'class_name' => 'HRAssessmentMigration',
+      'description' => t('Migration of assessments'),
+      'machine_name' => 'hr_assessments'.$machine_name,
+      'source_type' => 'assessment',
+      'destination_type' => 'hr_assessment',
     ),
   );
 
