@@ -54,7 +54,7 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
   );
 
   // We just use the migrate_d2d D6 migration class as-is.
-  Migration::registerMigration('DrupalUser7Migration', $arguments['machine_name'],
+  Migration::registerMigration('HRUserMigration', $arguments['machine_name'],
                                $arguments);
 
   $profile_arguments = $common_arguments + array(

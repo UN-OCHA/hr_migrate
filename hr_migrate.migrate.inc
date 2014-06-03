@@ -120,6 +120,12 @@ class HRMigration extends DrupalNode7Migration {
     return $this->translateTerms($value, 'hr_funding_type');
   }
 
+  protected function fieldFundingMethods($value) {
+    $gid = $this->getSpace();
+    return $this->translateNodes($value, 'hr_funding_method', $gid);
+  }
+
+
   protected function fieldJobTitle($value) {
     return $this->translateTerms($value, 'hr_job_title');
   }
@@ -169,7 +175,10 @@ class HRMigration extends DrupalNode7Migration {
     if ($this->arguments['source_connection'] == 'er') {
       $type = 'hr_sector';
     }
-    $title = $groups[$this->arguments['source_connection']];
+    $title = '';
+    if (in_array($this->arguments['source_connection'], array_keys($groups))) {
+      $title = $groups[$this->arguments['source_connection']];
+    }
     $operations = array(
       'ethiopia' => 'Ethiopia',
     );
@@ -513,6 +522,8 @@ class HRDocumentMigration extends HRMigration {
     $this->removeFieldMapping('body:language');
     $this->addFieldMapping('body:language', 'language')->defaultValue('en');
 
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_publication_date', 'field_publication_date');
     $this->addFieldMapping('field_publication_date:timezone')
@@ -523,9 +534,9 @@ class HRDocumentMigration extends HRMigration {
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
     $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
-    $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
-    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
+    $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     if ($this->arguments['source_connection'] == 'www') {
       $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
@@ -551,6 +562,14 @@ class HRInfographicMigration extends HRMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
+    $files_migration = 'hr_files';
+
+    if ($this->arguments['source_connection'] != 'www') {
+      $files_migration = 'hr_files_'.$this->arguments['source_connection'];
+    }
+
+    //$this->dependencies[] = $files_migration;
+
     $this->addUnmigratedSources(array(
       'field_doc_thumbnail',
       'field_doc_thumbnail:alt',
@@ -565,6 +584,8 @@ class HRInfographicMigration extends HRMigration {
       'field_files_collection',
     ));
 
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
+
     $this->removeFieldMapping('body:language');
     $this->addFieldMapping('body:language', 'language')->defaultValue('en');
 
@@ -578,9 +599,9 @@ class HRInfographicMigration extends HRMigration {
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
     $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
-    $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
-    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
+    $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
   }
 
@@ -593,6 +614,19 @@ class HRInfographicMigration extends HRMigration {
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $this->redirect($entity, $row);
+    $migrations = migrate_migrations();
+    $files_migration = $migrations['hr_files_'.$this->arguments['source_connection']];
+    $map = $files_migration->map;
+    $old_fid = $row->field_map_file[0];
+    $row_fid = $map->getRowBySource($old_fid);
+    // @todo new fid
+    $node = node_load($entity->nid);
+    $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_files_collection'));
+    $field_collection_item->setHostEntity('node',$node);
+    $field_collection_item->field_language[LANGUAGE_NONE][0]['value'] = $row->field_file_languages[0];
+    $field_collection_item->field_file[LANGUAGE_NONE][0]['fid'] = 4252;
+    $field_collection_item->field_file[LANGUAGE_NONE][0]['display'] = 1;
+    $field_collection_item->save();
   }
 }
 
@@ -623,12 +657,14 @@ class HRNewsMigration extends HRMigration {
     $this->removeFieldMapping('body:language');
     $this->addFieldMapping('body:language', 'language')->defaultValue('en');
 
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
     $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
-    $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     if ($this->arguments['source_connection'] == 'www') {
@@ -638,7 +674,7 @@ class HRNewsMigration extends HRMigration {
     else {
       $this->addFieldMapping('field_image', 'field_news_image')->sourceMigration('hr_files_'.$this->arguments['source_connection']);
     }
-    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
+    $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
 
     $this->addFieldMapping('field_image:alt', 'field_news_image:alt');
     $this->addFieldMapping('field_image:title', 'field_news_image:title');
@@ -685,16 +721,17 @@ class HREventsMigration extends HRMigration {
 
     $this->removeFieldMapping('body:language');
     $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
 
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
     $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
-    $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
-    $this->addFieldMapping('field_funding_types', 'field_fundings')->callbacks(array($this, 'fieldFundings'));
+    $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
 
     $this->addFieldMapping('field_address', 'field_event_address');
     $this->addFieldMapping('field_address:administrative_area', 'field_event_address:administrative_area');
@@ -710,11 +747,6 @@ class HREventsMigration extends HRMigration {
     $this->addFieldMapping('field_address:first_name', 'field_event_address:first_name');
     $this->addFieldMapping('field_address:last_name', 'field_event_address:last_name');
     $this->addFieldMapping('field_address:data', 'field_event_address:data');
-
-    $this->addFieldMapping('field_event_email', 'field_event_contact_email');
-    $this->addFieldMapping('field_event_person', 'field_event_contact_person');
-    $this->addFieldMapping('field_event_person:language')->defaultValue(LANGUAGE_NONE);
-    $this->addFieldMapping('field_event_telephone', 'field_event_contact_telephone'); // @todo Add callback to transform text field in valid phone
 
     $this->addFieldMapping('field_event_date', 'field_event_date');
     $this->addFieldMapping('field_event_date:rrule', 'field_event_date:rrule');
@@ -742,6 +774,29 @@ class HREventsMigration extends HRMigration {
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $this->redirect($entity, $row);
+    if (isset($row->field_event_contact_person) || isset($row->field_event_contact_email) || isset($row->field_event_contact_telephone)) {
+      $node = node_load($entity->nid);
+      $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_users_ref'));
+      $field_collection_item->setHostEntity('node',$node);
+      $field_collection_item->field_users_ref_checkbox[LANGUAGE_NONE][0]['value'] = 1;
+      if (isset($row->field_event_contact_person)) {
+        $field_collection_item->field_users_ref_name[LANGUAGE_NONE][0]['value'] = $row->field_event_contact_person[0];
+      }
+      if (isset($row->field_event_contact_email)) {
+        $field_collection_item->field_email[LANGUAGE_NONE][0]['email'] = $row->field_event_contact_email[0];
+      }
+      if (isset($row->field_event_contact_telephone)) {
+        $phones = explode('/', $row->field_event_contact_telephone[0]);
+        $field_collection_item->field_phones[LANGUAGE_NONE][0]['number'] = '+'.str_replace(array(' ','-'), '', $phones[0]);
+      }
+      $field_collection_item->save();
+    }
+    if (isset($row->field_event_minutes) && $row->field_event_minutes != NULL) {
+      debug('Event with meeting minutes');
+    }
+    if (isset($row->field_event_agenda) && $row->field_event_agenda != NULL) {
+      debug('Event with agenda');
+    }
   }
 
 }
@@ -1211,9 +1266,7 @@ class HRContactsMigration extends HRMigration {
       'type',
       'label',
       'field_profile_privacy',
-      'field_country_you_work_in',
       'field_other_contact_info',
-      'field_other_contact_info:revision_id',
     ));
     $this->addUnmigratedDestinations(array(
       'field_skype_id',
@@ -1226,7 +1279,7 @@ class HRContactsMigration extends HRMigration {
       'field_social_media:language',
       'field_locations',
     ));
-    $this->addSimpleMappings(array('field_email', 'field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension'));
+    $this->addSimpleMappings(array('field_email', 'field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension', 'field_opt_out'));
     $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_phones', 'field_phones:number');
     $this->addFieldMapping('field_phones:numbertype', 'field_phones');
@@ -1236,7 +1289,7 @@ class HRContactsMigration extends HRMigration {
     $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_job_title', 'field_job_title')->callbacks(array($this, 'fieldJobTitle'));
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
-
+    $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
 
   }
 
@@ -1259,6 +1312,19 @@ class HRContactsMigration extends HRMigration {
   public function prepare($entity, $row) {
     if ($this->arguments['source_connection'] != 'www') {
       $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    }
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+    if (isset($row->uid) && !is_null($row->uid)) {
+      $gid = $this->getSpace();
+      $user = user_load($entity->uid);
+      // Ungroup user
+      og_ungroup('node', $gid, 'user', $entity->uid);
+      //Make user a responder of group
+      og_group('node', $gid, array('entity_type' => 'user', 'entity' => $user, 'field_name' => 'field_responder_in', 'field_contact_information' => $entity->nid));
     }
   }
 
@@ -1318,3 +1384,34 @@ class HRAssessmentMigration extends HRMigration {
   }
 }
 
+class HRUserMigration extends DrupalUser7Migration {
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $gid = $this->getSpace();
+    //Make user a member of group
+    og_group('node', $gid, array('entity_type' => 'user', 'entity' => $entity, 'field_name' => 'og_user_node'));
+  }
+
+  protected function getSpace() {
+    $operations = array(
+      'ethiopia' => 'Ethiopia',
+    );
+    if (in_array($this->arguments['source_connection'], array_keys($operations))) {
+      $type = 'hr_operation';
+      $title = $operations[$this->arguments['source_connection']];
+    }
+    $query = new EntityFieldQuery();
+    $entities = $query
+      ->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', $type)
+      ->propertyCondition('title', $title)
+      ->execute();
+    if (!empty($entities['node'])) {
+      if (count($entities['node']) == 1) {
+        $target_id = reset(array_keys($entities['node']));
+      }
+    }
+    return $target_id;
+  }
+}
