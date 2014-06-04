@@ -206,11 +206,17 @@ class HRMigration extends DrupalNode7Migration {
       $entity->path['pathauto'] = TRUE;
       node_save($entity);
     }
+    if (isset($entity->body)) {
+      $this->translateBody($entity);
+    }
   }
 
   protected function redirect($entity, $row) {
     if ($this->arguments['source_connection'] != 'www' && isset($entity->path['alias'])) {
       $redirect = new stdClass();
+      if (!isset($row->path)) {
+        $row->path = 'node/'.$row->nid;
+      }
       $redirect->source = $row->path;
       $redirect->redirect = 'https://www.humanitarianresponse.info/'.drupal_get_path_alias('node/'.$entity->nid);
       $redirect->language = LANGUAGE_NONE;
@@ -231,6 +237,31 @@ class HRMigration extends DrupalNode7Migration {
           'access' => 0,
         ))
         ->execute();
+    }
+  }
+
+  protected function translateFile($old_fid) {
+    $migrations = migrate_migrations();
+    $files_migration = $migrations['hr_files_'.$this->arguments['source_connection']];
+    $map = $files_migration->map;
+    $row_fid = $map->getRowBySource(array($old_fid));
+    $new_fid = $row_fid['destid1'];
+    return $new_fid;
+  }
+
+  protected function translateBody($entity) {
+    $language = $entity->language;
+    $body = $entity->body[$language][0]['value'];
+    $body = str_replace('"view_mode":"media_responsive"', '"view_mode":"default"', $body);
+    $body = str_replace('"format":"media_responsive"', '"format":"default"', $body);
+    $body = preg_replace_callback('/"fid":"([0-9]*)"/', array($this, 'replaceBody'), $body);
+    $entity->body[$language][0]['value'] = $body;
+    node_save($entity);
+  }
+
+  protected function replaceBody($matches) {
+    if (isset($matches[1])) {
+      return '"fid":"'.$this->translateFile($matches[1]).'"';
     }
   }
 }
@@ -568,7 +599,7 @@ class HRInfographicMigration extends HRMigration {
       $files_migration = 'hr_files_'.$this->arguments['source_connection'];
     }
 
-    //$this->dependencies[] = $files_migration;
+    $this->dependencies[] = $files_migration;
 
     $this->addUnmigratedSources(array(
       'field_doc_thumbnail',
@@ -613,20 +644,15 @@ class HRInfographicMigration extends HRMigration {
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
-    $this->redirect($entity, $row);
-    $migrations = migrate_migrations();
-    $files_migration = $migrations['hr_files_'.$this->arguments['source_connection']];
-    $map = $files_migration->map;
-    $old_fid = $row->field_map_file[0];
-    $row_fid = $map->getRowBySource($old_fid);
-    // @todo new fid
+    $new_fid = $this->translateFile($row->field_map_file[0]);
     $node = node_load($entity->nid);
     $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_files_collection'));
     $field_collection_item->setHostEntity('node',$node);
     $field_collection_item->field_language[LANGUAGE_NONE][0]['value'] = $row->field_file_languages[0];
-    $field_collection_item->field_file[LANGUAGE_NONE][0]['fid'] = 4252;
+    $field_collection_item->field_file[LANGUAGE_NONE][0]['fid'] = $new_fid;
     $field_collection_item->field_file[LANGUAGE_NONE][0]['display'] = 1;
     $field_collection_item->save();
+    $this->redirect($entity, $row);
   }
 }
 
@@ -1317,6 +1343,7 @@ class HRContactsMigration extends HRMigration {
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
+    $row->path = 'profile/'.$row->pid;
     $this->redirect($entity, $row);
     if (isset($row->uid) && !is_null($row->uid)) {
       $gid = $this->getSpace();
