@@ -112,6 +112,17 @@ class HRMigration extends DrupalNode7Migration {
     return $this->translateNodes($value, 'hr_bundle', $gid);
   }
 
+  protected function fieldDisasters($value) {
+    $gid = $this->getSpace();
+    return $this->translateNodes($value, 'hr_disaster', $gid);
+  }
+
+  protected function fieldCoordinationHubs($value) {
+    $gid = $this->getSpace();
+    return $this->translateNodes($value, 'hr_office', $gid);
+  }
+
+
   protected function fieldLocations($value) {
     return $this->translateTerms($value, 'hr_location');
   }
@@ -181,6 +192,7 @@ class HRMigration extends DrupalNode7Migration {
     }
     $operations = array(
       'ethiopia' => 'Ethiopia',
+      'somalia' => 'Somalia',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -569,6 +581,8 @@ class HRDocumentMigration extends HRMigration {
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
+    $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
     if ($this->arguments['source_connection'] == 'www') {
       $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
     }
@@ -608,6 +622,10 @@ class HRInfographicMigration extends HRMigration {
       'field_doc_thumbnail:width',
       'field_doc_thumbnail:height',
       'field_display_properties',
+      'field_file_languages',
+      'field_map_file',
+      'field_map_file:display',
+      'field_map_file:description',
     ));
     $this->addUnmigratedDestinations(array(
       'field_publication_date:rrule',
@@ -634,6 +652,8 @@ class HRInfographicMigration extends HRMigration {
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
+    $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
   }
 
   public function prepare($entity, $row) {
@@ -671,13 +691,9 @@ class HRNewsMigration extends HRMigration {
       $this->dependencies[] = 'hr_files_'.$this->arguments['source_connection'];
     }
 
-    $this->addUnmigratedSources(array(
-      'field_page',
-      'field_news_image:width',
-      'field_news_image:height',
-    ));
     $this->addUnmigratedDestinations(array(
       'field_organizations',
+      'field_coordination_hubs',
     ));
 
     $this->removeFieldMapping('body:language');
@@ -692,6 +708,7 @@ class HRNewsMigration extends HRMigration {
     $this->addFieldMapping('field_related_content:attributes', 'field_linked_resources:attributes');
     $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     if ($this->arguments['source_connection'] == 'www') {
       $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
@@ -702,8 +719,6 @@ class HRNewsMigration extends HRMigration {
     }
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
 
-    $this->addFieldMapping('field_image:alt', 'field_news_image:alt');
-    $this->addFieldMapping('field_image:title', 'field_news_image:title');
     $this->addFieldMapping('field_image:file_class')->defaultValue('MigrateFileFid');
   }
 
@@ -730,7 +745,6 @@ class HREventsMigration extends HRMigration {
     parent::__construct($arguments);
 
     $this->addUnmigratedSources(array(
-      'field_page',
       'field_event_map',
       'field_event_map:lat',
       'field_event_map:lon',
@@ -739,7 +753,10 @@ class HREventsMigration extends HRMigration {
       'field_event_map:right',
       'field_event_map:bottom',
       'field_event_map:geom',
-      'field_event_map:geohash'
+      'field_event_map:geohash',
+      'field_event_contact_email',
+      'field_event_contact_person',
+      'field_event_contact_telephone',
     ));
     $this->addUnmigratedDestinations(array(
       'field_organizations',
@@ -758,6 +775,8 @@ class HREventsMigration extends HRMigration {
     $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
+    $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
 
     $this->addFieldMapping('field_address', 'field_event_address');
     $this->addFieldMapping('field_address:administrative_area', 'field_event_address:administrative_area');
@@ -799,7 +818,7 @@ class HREventsMigration extends HRMigration {
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
-    $this->redirect($entity, $row);
+    //$this->redirect($entity, $row);
     if (isset($row->field_event_contact_person) || isset($row->field_event_contact_email) || isset($row->field_event_contact_telephone)) {
       $node = node_load($entity->nid);
       $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_users_ref'));
@@ -1316,6 +1335,8 @@ class HRContactsMigration extends HRMigration {
     $this->addFieldMapping('field_job_title', 'field_job_title')->callbacks(array($this, 'fieldJobTitle'));
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
+    $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
 
   }
 
@@ -1358,25 +1379,153 @@ class HRContactsMigration extends HRMigration {
 }
 
 /**
+ * Migration of assessments data, questionnaire and reports field collections
+ */
+class HRAssessmentCollectionMigration extends DrupalMigration {
+  protected $_field_name = '';
+
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $assessments_migration = 'hr_assessments';
+    $files_migration = 'hr_files';
+
+    if ($this->arguments['source_connection'] != 'www') {
+      $assessments_migration = 'hr_assessments_'.$this->arguments['source_connection'];
+      $files_migration = 'hr_files_'.$this->arguments['source_connection'];
+    }
+
+    $this->dependencies[] = $assessments_migration;
+    $this->dependencies[] = $files_migration;
+
+    $this->sourceFields += $this->version->getSourceFields('field_collection_item', $this->_field_name);
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        $this->_field_name.'_value' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'alias' => 'f'
+        )
+      ),
+      MigrateDestinationFieldCollection::getKeySchema()
+    );
+
+    $this->source = new MigrateSourceSQL($this->query(), $this->sourceFields, NULL, $this->sourceOptions);
+
+    $this->destination = new MigrateDestinationFieldCollection(
+      $this->_field_name,
+      array('host_entity_type' => 'node')
+    );
+
+    $this->addUnmigratedSources(array('language'));
+
+    $this->addFieldMapping('host_entity_id', 'entity_id')
+      ->sourceMigration($assessments_migration);
+
+    switch ($this->_field_name) {
+      case 'field_asst_data':
+        $this->addFieldMapping('field_asst_instructions', 'field_asst_data_instruction');
+        $this->addFieldMapping('field_asst_url', 'field_asst_data_url');
+        $this->addFieldMapping('field_asst_url_rest', 'field_asst_data_url_rest');
+        $this->addFieldMapping('field_asst_accessibility', 'field_data_accessibility');
+        $this->addFieldMapping('field_asst_file', 'field_asst_data_file')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file:file_class')->defaultValue('MigrateFileFid');
+        $this->addFieldMapping('field_asst_file_rest', 'field_ass_data_file_rest')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file_rest:file_class')->defaultValue('MigrateFileFid');
+        break;
+      case 'field_asst_questionnaire':
+        $this->addFieldMapping('field_asst_instructions', 'field_ques_instructions');
+        $this->addFieldMapping('field_asst_url', 'field_ques_url');
+        $this->addFieldMapping('field_asst_url_rest', 'field_ques_url_rest');
+        $this->addFieldMapping('field_asst_accessibility', 'field_ques_accessibility');
+        $this->addFieldMapping('field_asst_file', 'field_ques_file')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file:file_class')->defaultValue('MigrateFileFid');
+        $this->addFieldMapping('field_asst_file_rest', 'field_ques_file_rest')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file_rest:file_class')->defaultValue('MigrateFileFid');
+        break;
+      case 'field_asst_report':
+        $this->addFieldMapping('field_asst_instructions', 'field_asst_report_inst');
+        $this->addFieldMapping('field_asst_url', 'field_asst_report_url');
+        $this->addFieldMapping('field_asst_url_rest', 'field_asst_report_url_rest');
+        $this->addFieldMapping('field_asst_accessibility', 'field_report_accessibility');
+        $this->addFieldMapping('field_asst_file', 'field_asst_report_file')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file:file_class')->defaultValue('MigrateFileFid');
+        $this->addFieldMapping('field_asst_file_rest', 'field_asst_report_file_rest')->sourceMigration($files_migration);
+        $this->addFieldMapping('field_asst_file_rest:file_class')->defaultValue('MigrateFileFid');
+        break;
+    }
+
+
+    //$this->addFieldMapping('field_asst_instructions', $this->_field_name.
+
+    /*$this->addFieldMapping('field_language', 'field_file_languages');
+
+    $this->addFieldMapping('field_file', 'field_document_files_file')->sourceMigration($files_migration);
+    $this->addFieldMapping('field_file:display', 'field_document_files_file:display');
+    $this->addFieldMapping('field_file:description', 'field_document_files_file:description');
+    $this->addFieldMapping('field_file:file_class')->defaultValue('MigrateFileFid');*/
+
+  }
+
+  public function query() {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_'.$this->_field_name, 'f')
+             ->fields('f', array('entity_id', 'language', $this->_field_name.'_value'));
+    return $query;
+  }
+
+  public function prepareRow($row) {
+    if (parent::prepareRow($row) === FALSE) {
+      return FALSE;
+    }
+    $field_name_value = $this->_field_name.'_value';
+    $this->version->getSourceValues($row, $row->{$field_name_value});
+  }
+
+  protected function fieldLanguage($value) {
+    return $value[0];
+  }
+
+}
+
+class HRAssessmentCollectionDataMigration extends HRAssessmentCollectionMigration {
+  public function __construct(array $arguments) {
+    $this->_field_name = 'field_asst_data';
+    parent::__construct($arguments);
+  }
+}
+
+class HRAssessmentCollectionQuestionnaireMigration extends HRAssessmentCollectionMigration {
+  public function __construct(array $arguments) {
+    $this->_field_name = 'field_asst_questionnaire';
+    parent::__construct($arguments);
+  }
+}
+
+class HRAssessmentCollectionReportMigration extends HRAssessmentCollectionMigration {
+  public function __construct(array $arguments) {
+    $this->_field_name = 'field_asst_report';
+    parent::__construct($arguments);
+  }
+}
+
+/**
  * Migration of assessments
  */
 class HRAssessmentMigration extends HRMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
-    /*$this->addUnmigratedSources(array(
-      'field_doc_thumbnail',
-      'field_doc_thumbnail:alt',
-      'field_doc_thumbnail:title',
-      'field_doc_thumbnail:width',
-      'field_doc_thumbnail:height',
-      'field_display_properties',
+    $this->addUnmigratedSources(array(
+      'field_asst_contact_email',
+      'field_asst_contact_name',
+      'field_asst_contact_telephone',
     ));
     $this->addUnmigratedDestinations(array(
-      'field_publication_date:rrule',
-      'field_publication_date:to',
-      'field_files_collection',
-    ));*/
+      'field_users_ref',
+    ));
 
     $this->removeFieldMapping('body');
     $this->removeFieldMapping('body:summary');
@@ -1386,8 +1535,11 @@ class HRAssessmentMigration extends HRMigration {
     $this->addSimpleMappings(array('field_asst_other_location', 'field_asst_subject', 'field_asst_methodology', 'field_asst_key_findings', 'field_asst_unit', 'field_asst_collection_method',
       'field_asst_sample_size', 'field_asst_freq', 'field_asst_status'));
 
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
+
     $this->addFieldMapping('title_field', 'title_field');
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
+    $this->addFieldMapping('field_population_types', 'field_population_type')->callbacks(array($this, 'fieldPopulationTypes'));
     $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_related_content', 'field_linked_resources');
     $this->addFieldMapping('field_related_content:title', 'field_linked_resources:title');
@@ -1396,7 +1548,11 @@ class HRAssessmentMigration extends HRMigration {
     $this->addFieldMapping('field_related_content:language')->defaultValue(LANGUAGE_NONE);
     $this->addFieldMapping('field_organizations2', 'field_asst_participating_org')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_asst_date', 'field_asst_start_date');
+    $this->addFieldMapping('field_asst_date:to', 'field_asst_start_date:value2');
     $this->addFieldMapping('field_asst_date:timezone')->defaultValue(date_default_timezone_get());
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
+    $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
+    $this->addFieldMapping('field_geographic_level', 'field_asst_level_representation')->callbacks(array($this, 'fieldGeographicLevel'));
   }
 
   public function prepare($entity, $row) {
@@ -1408,7 +1564,34 @@ class HRAssessmentMigration extends HRMigration {
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $this->redirect($entity, $row);
+    if (isset($row->field_asst_contact_name) || isset($row->field_asst_contact_email) || isset($row->field_asst_contact_telephone)) {
+      $node = node_load($entity->nid);
+      $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_users_ref'));
+      $field_collection_item->setHostEntity('node',$node);
+      $field_collection_item->field_users_ref_checkbox[LANGUAGE_NONE][0]['value'] = 1;
+      if (isset($row->field_asst_contact_name)) {
+        $field_collection_item->field_users_ref_name[LANGUAGE_NONE][0]['value'] = $row->field_asst_contact_name[0];
+      }
+      if (isset($row->field_asst_contact_email)) {
+        $field_collection_item->field_email[LANGUAGE_NONE][0]['email'] = $row->field_asst_contact_email[0];
+      }
+      if (isset($row->field_asst_contact_telephone)) {
+        $phones = explode('/', $row->field_asst_contact_telephone[0]);
+        $field_collection_item->field_phones[LANGUAGE_NONE][0]['number'] = '+'.str_replace(array(' ','-'), '', $phones[0]);
+      }
+      $field_collection_item->save();
+    }
   }
+
+  protected function fieldPopulationTypes($value) {
+    return $this->translateTerms($value, 'hr_population_type');
+  }
+
+  protected function fieldGeographicLevel($value) {
+    $gid = $this->getSpace();
+    return $this->translateNodes($value, 'hr_geographic_level', $gid);
+  }
+
 }
 
 class HRUserMigration extends DrupalUser7Migration {
@@ -1423,6 +1606,7 @@ class HRUserMigration extends DrupalUser7Migration {
   protected function getSpace() {
     $operations = array(
       'ethiopia' => 'Ethiopia',
+      'somalia' => 'Somalia',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';

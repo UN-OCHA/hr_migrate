@@ -23,6 +23,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('assessments', 'assessments.humanitarianresponse.info', array('hr_document'));
   hr_migrate_register_site_migration('cod', 'cod.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_dataset'));
   hr_migrate_register_site_migration('ethiopia', 'ethiopia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
+  hr_migrate_register_site_migration('somalia', 'somalia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
 }
 
 /**
@@ -188,6 +189,30 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
 
     Migration::registerMigration('HRContactsMigration', $contact_arguments['machine_name'], $contact_arguments);
   }
+
+  if (in_array('hr_assessment', $content_types)) {
+    $data_arguments = $common_arguments + array(
+      'description' => t('Migration of assessments data'),
+      'machine_name' => 'hr_asst_collection_data'.$machine_name,
+    );
+
+    Migration::registerMigration('HRAssessmentCollectionDataMigration', $data_arguments['machine_name'], $data_arguments);
+
+    $report_arguments = $common_arguments + array(
+      'description' => t('Migration of assessments reports'),
+      'machine_name' => 'hr_asst_collection_reports'.$machine_name,
+    );
+
+    Migration::registerMigration('HRAssessmentCollectionReportMigration', $report_arguments['machine_name'], $report_arguments);
+
+    $questionnaire_arguments = $common_arguments + array(
+      'description' => t('Migration of assessments questionnaires'),
+      'machine_name' => 'hr_asst_collection_questionnaire'.$machine_name,
+    );
+
+    Migration::registerMigration('HRAssessmentCollectionQuestionnaireMigration', $questionnaire_arguments['machine_name'], $questionnaire_arguments);
+  }
+
 
 }
 
