@@ -818,7 +818,6 @@ class HREventsMigration extends HRMigration {
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
-    //$this->redirect($entity, $row);
     if (isset($row->field_event_contact_person) || isset($row->field_event_contact_email) || isset($row->field_event_contact_telephone)) {
       $node = node_load($entity->nid);
       $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_users_ref'));
@@ -842,6 +841,7 @@ class HREventsMigration extends HRMigration {
     if (isset($row->field_event_agenda) && $row->field_event_agenda != NULL) {
       $this->fieldEventFiles($entity, $row, 'Agenda');
     }
+    $this->redirect($entity, $row);
   }
 
   protected function fieldEventFiles($entity, $row, $type) {
@@ -1409,7 +1409,6 @@ class HRContactsMigration extends HRMigration {
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $row->path = 'profile/'.$row->pid;
-    $this->redirect($entity, $row);
     if (isset($row->uid) && !is_null($row->uid)) {
       $gid = $this->getSpace();
       $user = user_load($entity->uid);
@@ -1418,6 +1417,7 @@ class HRContactsMigration extends HRMigration {
       //Make user a responder of group
       og_group('node', $gid, array('entity_type' => 'user', 'entity' => $user, 'field_name' => 'field_responder_in', 'field_contact_information' => $entity->nid));
     }
+    $this->redirect($entity, $row);
   }
 
 }
@@ -1607,7 +1607,6 @@ class HRAssessmentMigration extends HRMigration {
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
-    $this->redirect($entity, $row);
     if (isset($row->field_asst_contact_name) || isset($row->field_asst_contact_email) || isset($row->field_asst_contact_telephone)) {
       $node = node_load($entity->nid);
       $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_users_ref'));
@@ -1625,6 +1624,7 @@ class HRAssessmentMigration extends HRMigration {
       }
       $field_collection_item->save();
     }
+    $this->redirect($entity, $row);
   }
 
   protected function fieldPopulationTypes($value) {
