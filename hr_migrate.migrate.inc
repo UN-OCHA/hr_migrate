@@ -837,12 +837,56 @@ class HREventsMigration extends HRMigration {
       $field_collection_item->save();
     }
     if (isset($row->field_event_minutes) && $row->field_event_minutes != NULL) {
-      debug('Event with meeting minutes');
+      $this->fieldEventFiles($entity, $row, 'Meeting Minutes');
     }
     if (isset($row->field_event_agenda) && $row->field_event_agenda != NULL) {
-      debug('Event with agenda');
+      $this->fieldEventFiles($entity, $row, 'Agenda');
     }
   }
+
+  protected function fieldEventFiles($entity, $row, $type) {
+    $src_field_name = '';
+    $field_name = '';
+    if ($type == 'Meeting Minutes') {
+      $src_field_name = 'field_event_minutes';
+      $field_name = 'field_event_meeting_minutes';
+    }
+    elseif ($type == 'Agenda') {
+      $src_field_name = 'field_event_agenda';
+      $field_name = 'field_event_agenda';
+    }
+    $node = node_load($entity->nid);
+    $document = new stdClass();
+    $document->type = 'hr_document';
+    $document->title = $row->title.' - '.$type;
+    $doc_type = reset(taxonomy_get_term_by_name($type, 'hr_document_type'));
+    $document->field_document_type[LANGUAGE_NONE][0]['target_id'] = $doc_type->tid;
+    $document->field_bundles = isset($node->field_bundles) ? $node->field_bundles : '';
+    $document->field_locations = isset($node->field_locations) ? $node->field_locations : '';
+    $document->field_organizations = isset($node->field_organizations) ? $node->field_organizations : '';
+    $document->field_coordination_hubs = isset($node->field_coordination_hubs) ? $node->field_coordination_hubs : '';
+    $document->field_disasters = isset($node->field_disasters) ? $node->field_disasters : '';
+    $document->field_funding_methods = isset($node->field_funding_methods) ? $node->field_funding_methods : '';
+    $document->field_themes = isset($node->field_themes) ? $node->field_themes : '';
+    $document->group_content_access[LANGUAGE_NONE][0]['value'] = 0;
+    $document->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    $document->path['pathauto'] = TRUE;
+    $document->uid = $node->uid;
+    node_save($document);
+
+    foreach ($row->{$src_field_name} as $index => $item) {
+      $new_fid = $this->translateFile($item);
+      $field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_files_collection'));
+      $field_collection_item->setHostEntity('node',$document);
+      $field_collection_item->field_language[LANGUAGE_NONE][0]['value'] = 'en';
+      $field_collection_item->field_file[LANGUAGE_NONE][0]['fid'] = $new_fid;
+      $field_collection_item->field_file[LANGUAGE_NONE][0]['display'] = 1;
+      $field_collection_item->save();
+    }
+    $node->{$field_name}[LANGUAGE_NONE][0]['target_id'] = $document->nid;
+    node_save($node);
+  }
+
 
 }
 
