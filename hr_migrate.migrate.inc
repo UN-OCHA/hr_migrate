@@ -868,6 +868,9 @@ class HREventsMigration extends HRMigration {
     $document->field_disasters = isset($node->field_disasters) ? $node->field_disasters : '';
     $document->field_funding_methods = isset($node->field_funding_methods) ? $node->field_funding_methods : '';
     $document->field_themes = isset($node->field_themes) ? $node->field_themes : '';
+    $document->field_publication_date = isset($node->field_event_date) ? $node->field_event_date : '';
+    unset($document->field_publication_date[LANGUAGE_NONE][0]['value2']);
+    unset($document->field_publication_date[LANGUAGE_NONE][0]['rrule']);
     $document->group_content_access[LANGUAGE_NONE][0]['value'] = 0;
     $document->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
     $document->path['pathauto'] = TRUE;
