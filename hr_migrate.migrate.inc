@@ -138,7 +138,11 @@ class HRMigration extends DrupalNode7Migration {
 
 
   protected function fieldJobTitle($value) {
-    return $this->translateTerms($value, 'hr_job_title');
+    $term_name = '';
+    foreach ($value as $i => $val) {
+      $term_name = $this->getLegacyTermName($val);
+    }
+    return $term_name;
   }
 
   protected function fieldGroupAudience($value) {
@@ -369,7 +373,7 @@ class HRProfile2Migration extends HRMigration {
     $this->addFieldMapping('field_organizations_other', 'field_oganization_other');
     $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
-    $this->addFieldMapping('field_job_title', 'field_job_title')->callbacks(array($this, 'fieldJobTitle')); 
+    $this->addFieldMapping('field_job_title_other', 'field_job_title')->callbacks(array($this, 'fieldJobTitle')); 
 
 
   }
@@ -1379,7 +1383,7 @@ class HRContactsMigration extends HRMigration {
     $this->addFieldMapping('field_organizations_other', 'field_oganization_other');
     $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
-    $this->addFieldMapping('field_job_title', 'field_job_title')->callbacks(array($this, 'fieldJobTitle'));
+    $this->addFieldMapping('field_job_title_other', 'field_job_title')->callbacks(array($this, 'fieldJobTitle'));
     $this->addFieldMapping('field_themes', 'field_themes')->callbacks(array($this, 'fieldThemes'));
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
