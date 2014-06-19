@@ -16,6 +16,39 @@ class HRMigration extends DrupalNode7Migration {
     return $term_name;
   }
 
+  protected function getLegacyTermPCode($val) {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_field_location_pcode', 'f')
+             ->fields('f', array('field_location_pcode_value'))
+             ->condition('entity_id', $val);
+    $result = $query->execute()->fetchAssoc();
+    $pcode = isset($result['field_location_pcode_value']) ? $result['field_location_pcode_value'] : '';
+    return $pcode;
+  }
+
+  protected function getTermByPCode($val) {
+    $return = 0;
+    $query = new EntityFieldQuery();
+    $query
+      ->entityCondition('entity_type', 'taxonomy_term')
+      ->entityCondition('bundle', 'hr_location')
+      ->fieldCondition('field_pcode', 'value', $val, '=');
+    $entities = $query->execute();
+    if (!empty($entities['taxonomy_term'])) {
+      if (count($entities['taxonomy_term']) == 1) {
+        $return = reset(array_keys($entities['taxonomy_term']));
+      }
+      else {
+        debug('Multiple terms with PCode '.$val.' in current database');
+      }
+    }
+    else {
+      debug('Could not find term with PCode '.$val.' in current database');
+    }
+    return $return;
+  }
+
+
   protected function translateTerms($value, $vocabulary) {
     if (!is_array($value)) {
       $value = array($value);
@@ -124,7 +157,21 @@ class HRMigration extends DrupalNode7Migration {
 
 
   protected function fieldLocations($value) {
-    return $this->translateTerms($value, 'hr_location');
+    //return $this->translateTerms($value, 'hr_location');
+    if (!is_array($value)) {
+      $value = array($value);
+    }
+    $return  = array();
+    foreach ($value as $i => $val) {
+      $pcode = $this->getLegacyTermPCode($val);
+      if (!empty($pcode)) {
+        $tid = $this->getTermByPCode($val);
+        if (!empty($tid)) {
+          $return[$i] = $tid;
+        }
+      }
+    }
+    return $return;
   }
 
   protected function fieldFundings($value) {
