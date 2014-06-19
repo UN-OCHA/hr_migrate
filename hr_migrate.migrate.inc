@@ -272,6 +272,15 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
+    // Move Coordination cluster to Inter-Cluster Coordination theme
+    if ($this->arguments['source_connection'] == 'philippines') {
+      // 2447 is the tid of the "Coordination" term
+      if (in_array(2447, $row->field_clusters)) {
+        $term = taxonomy_get_term_by_name('Inter-Cluster Coordination', 'hr_theme');
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $term->tid);
+        node_save($entity);
+      }
+    }
   }
 
   protected function redirect($entity, $row) {
