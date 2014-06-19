@@ -244,6 +244,7 @@ class HRMigration extends DrupalNode7Migration {
     $operations = array(
       'ethiopia' => 'Ethiopia',
       'somalia' => 'Somalia',
+      'philippines' => 'Philippines',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -1712,6 +1713,7 @@ class HRUserMigration extends DrupalUser7Migration {
     $operations = array(
       'ethiopia' => 'Ethiopia',
       'somalia' => 'Somalia',
+      'philippines' => 'Philippines',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
