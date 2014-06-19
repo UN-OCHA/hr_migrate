@@ -87,8 +87,18 @@ class HRMigration extends DrupalNode7Migration {
     $return  = array();
     foreach ($value as $i => $val) {
       $term_name = $this->getLegacyTermName($val);
-      if ($term_name == 'Child Protection') {
-        $term_name = 'Protection';
+      if ($this->arguments['source_connection'] == 'philippines' && $type == 'hr_sector') {
+        switch($term_name) {
+          case 'Early Recovery and Livelihood':
+            $term_name = 'Early Recovery';
+            break;
+          case 'Emergency Shelter':
+            $term_name = 'Emergency Shelter and NFI';
+            break;
+          case 'Food Security and Agriculture':
+            $term_name = 'Food Security';
+            break;
+        }
       }
       if (!empty($term_name)) {
         $query = new EntityFieldQuery();
@@ -165,7 +175,7 @@ class HRMigration extends DrupalNode7Migration {
     foreach ($value as $i => $val) {
       $pcode = $this->getLegacyTermPCode($val);
       if (!empty($pcode)) {
-        $tid = $this->getTermByPCode($val);
+        $tid = $this->getTermByPCode($pcode);
         if (!empty($tid)) {
           $return[$i] = $tid;
         }
@@ -277,7 +287,7 @@ class HRMigration extends DrupalNode7Migration {
     if ($this->arguments['source_connection'] == 'philippines') {
       // 2447 is the tid of the "Coordination" term
       if (in_array(2447, $row->field_clusters)) {
-        $term = taxonomy_get_term_by_name('Inter-Cluster Coordination', 'hr_theme');
+        $term = taxonomy_get_term_by_name('Field Coordination', 'hr_theme');
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $term->tid);
         node_save($entity);
       }
@@ -420,7 +430,6 @@ class HRProfile2Migration extends HRMigration {
       'field_social_media:title',
       'field_social_media:attributes',
       'field_social_media:language',
-      'field_location',
     ));
     $this->addSimpleMappings(array('field_last_name', 'field_first_name', 'field_phones:countrycode', 'field_phones:extension'));
     $this->addFieldMapping('field_phones', 'field_phones:number');
@@ -430,7 +439,7 @@ class HRProfile2Migration extends HRMigration {
     $this->addFieldMapping('field_organizations', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_sectors', 'field_clusters')->callbacks(array($this, 'fieldSectors'));
     $this->addFieldMapping('field_job_title_other', 'field_job_title')->callbacks(array($this, 'fieldJobTitle')); 
-
+    $this->addFieldMapping('field_location', 'field_locations')->callbacks(array($this, 'fieldLocations'));
 
   }
 
@@ -454,7 +463,7 @@ class HRProfile2Migration extends HRMigration {
 
   public function prepare($entity, $row) {
     // Make sure locations are not added
-    $entity->field_location = array();
+    //$entity->field_location = array();
     if (empty($entity->uid)) {
       if (!empty($row->field_email[0])) {
         $user = user_load_by_mail($row->field_email[0]);
