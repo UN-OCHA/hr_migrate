@@ -414,7 +414,6 @@ class HRProfile2Migration extends HRMigration {
     $this->addUnmigratedDestinations(array(
       'field_skype_id',
       'field_skype_id:language',
-      'field_job_title_other',
       'field_job_title_other:language',
       'field_social_media',
       'field_social_media:title',
@@ -1423,7 +1422,6 @@ class HRContactsMigration extends HRMigration {
     $this->addUnmigratedDestinations(array(
       'field_skype_id',
       'field_skype_id:language',
-      'field_job_title_other',
       'field_job_title_other:language',
       'field_social_media',
       'field_social_media:title',

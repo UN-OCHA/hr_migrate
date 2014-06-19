@@ -24,6 +24,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('cod', 'cod.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_dataset'));
   hr_migrate_register_site_migration('ethiopia', 'ethiopia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
   hr_migrate_register_site_migration('somalia', 'somalia.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
+  hr_migrate_register_site_migration('philippines', 'philippines.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
 }
 
 /**
