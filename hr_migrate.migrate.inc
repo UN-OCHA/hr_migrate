@@ -1401,6 +1401,7 @@ class HRContactsMigration extends HRMigration {
     $this->addFieldMapping('field_funding_methods', 'field_fundings')->callbacks(array($this, 'fieldFundingMethods'));
     $this->addFieldMapping('field_coordination_hubs', 'field_coordination_hubs')->callbacks(array($this, 'fieldCoordinationHubs'));
     $this->addFieldMapping('field_disasters', 'field_emergencies')->callbacks(array($this, 'fieldDisasters'));
+    $this->addFieldMapping('field_functional_roles', 'field_froles')->callbacks(array($this, 'fieldFunctionalRoles'));
 
   }
 
@@ -1438,6 +1439,23 @@ class HRContactsMigration extends HRMigration {
       og_group('node', $gid, array('entity_type' => 'user', 'entity' => $user, 'field_name' => 'field_responder_in', 'field_contact_information' => $entity->nid));
     }
     $this->redirect($entity, $row);
+  }
+
+  protected function fieldFunctionalRoles($value) {
+    if (!is_array($value)) {
+      $value = array($value);
+    }
+    $tids = array();
+    foreach ($value as $i => $fc_id) {
+      $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_field_functional_role', 'f')
+             ->fields('f', array('field_functional_role_tid'))
+             ->condition('entity_id', $fc_id);
+      $result = $query->execute()->fetchAssoc();
+      $tid = isset($result['field_functional_role_tid']) ? $result['field_functional_role_tid'] : '';
+      $tids[] = $tid;
+    }
+    return $this->translateTerms($tids, 'hr_functional_role');
   }
 
 }
