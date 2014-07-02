@@ -24,6 +24,17 @@ function hr_migrate_drush_command() {
     'aliases' => array(),
   );
 
+  $items['hr-migrate-redirects'] = array(
+    'description' => "Import the redirects into multisite_redirect",
+    'arguments' => array(
+      'site' => 'Site URL',
+      'path' => 'Path to the CSV file containing the redirects',
+    ),
+    'options' => array(
+    ),
+    'drupal dependencies' => array(),
+  );
+
   return $items;
 }
 
@@ -63,4 +74,37 @@ function drush_hr_migrate_job_titles() {
     }
   }
 
+}
+
+function _hr_migrate_csv_to_array($filename='', $delimiter=',') {
+    $header = NULL;
+    $data = array();
+    if (($handle = fopen($filename, 'r')) !== FALSE)
+    {
+        while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE)
+        {
+            if(!$header)
+                $header = $row;
+            else
+                $data[] = array_combine($header, $row);
+        }
+        fclose($handle);
+    }
+    return $data;
+}
+
+function drush_hr_migrate_redirects($site, $path) {
+  // Load the CSV file
+  $redirects = _hr_migrate_csv_to_array($path);
+  foreach ($redirects as $redirect) {
+    $mredirect = new stdClass();
+    multisite_redirect_object_prepare($mredirect, array(
+      'source_site' => $site,
+      'source_path' => $redirect['Source URL'],
+      'redirect' => str_replace('https://www.humanitarianresponse.info/', '', $redirect['Redirect URL']),
+      'status_code' => '301',
+    ));
+    var_dump($mredirect);
+    //multisite_redirect_save($redirect);
+  }
 }
