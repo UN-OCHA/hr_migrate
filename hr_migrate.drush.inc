@@ -104,7 +104,6 @@ function drush_hr_migrate_redirects($site, $path) {
       'redirect' => str_replace('https://www.humanitarianresponse.info/', '', $redirect['Redirect URL']),
       'status_code' => '301',
     ));
-    var_dump($mredirect);
-    //multisite_redirect_save($redirect);
+    multisite_redirect_save($redirect);
   }
 }
