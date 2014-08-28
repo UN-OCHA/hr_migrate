@@ -293,6 +293,14 @@ class HRMigration extends DrupalNode7Migration {
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
       }
+
+      // Move local theme LRA to global theme LRA
+      if (!empty($row->field_local_themes) && in_array(985, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Lord's Resistance Army", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
     }
   }
 
