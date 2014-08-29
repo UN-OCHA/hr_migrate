@@ -829,7 +829,6 @@ class HREventsMigration extends HRMigration {
         $timezone = 'Africa/Bangui';
         break;
     }
-    debug($timezone);
     $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
 
     $this->addFieldMapping('field_event_category', 'field_event_category')->callbacks(array($this, 'fieldEventCategory'));
