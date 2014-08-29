@@ -823,7 +823,13 @@ class HREventsMigration extends HRMigration {
     $this->addFieldMapping('field_event_date', 'field_event_date');
     $this->addFieldMapping('field_event_date:rrule', 'field_event_date:rrule');
     $this->addFieldMapping('field_event_date:to', 'field_event_date:value2');
-    $this->addFieldMapping('field_event_date:timezone')->defaultValue(date_default_timezone_get());
+    $timezone = date_default_timezone_get();
+    switch ($this->arguments['source_connection']) {
+      case 'car':
+        $timezone = 'Africa/Bangui';
+        break;
+    }
+    $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
 
     $this->addFieldMapping('field_event_category', 'field_event_category')->callbacks(array($this, 'fieldEventCategory'));
 
