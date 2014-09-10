@@ -27,7 +27,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('philippines', 'philippines.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));*/
   //hr_migrate_register_site_migration('car', 'car.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
   hr_migrate_register_site_migration('rdc', 'rdc.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
-  hr_migrate_register_site_migration('afghanistan', 'afghanistan.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
+  hr_migrate_register_site_migration('afghanistan', 'afg.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
 }
 
 /**
