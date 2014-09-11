@@ -258,6 +258,7 @@ class HRMigration extends DrupalNode7Migration {
       'car' => 'Central African Republic',
       'rdc' => 'Democratic Republic of the Congo',
       'afghanistan' => 'Afghanistan',
+      'zw' => 'Zimbabwe',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -850,6 +851,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'afghanistan':
         $timezone = 'Asia/Kabul';
+        break;
+      case 'zw':
+        $timezone = 'Africa/Harare';
         break;
     }
     $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
@@ -1731,6 +1735,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'car' => 'Central African Republic',
       'rdc' => 'Democratic Republic of the Congo',
       'afghanistan' => 'Afghanistan',
+      'zw' => 'Zimbabwe',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
