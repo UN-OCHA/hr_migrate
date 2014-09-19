@@ -261,6 +261,7 @@ class HRMigration extends DrupalNode7Migration {
       'zw' => 'Zimbabwe',
       'haiti' => 'Haiti',
       'niger' => 'Niger',
+      'mali' => 'Mali',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -289,38 +290,14 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
-    if ($this->arguments['source_connection'] == 'afghanistan') {
-      // Move local theme Cash Voucher Working Group to working group Cash Voucher
-      if (!empty($row->field_local_themes) && in_array(1430, $row->field_local_themes)) {
-        // 22273 is the nid of Cash Voucher
-        $entity->field_bundles[LANGUAGE_NONE][] = array('target_id' => 22273);
-        node_save($entity);
-      }
-      // Move Inter-Cluster Coordination Local theme to Inter-Cluster Coordination theme
-      if (!empty($row->field_local_themes) && in_array(1104, $row->field_local_themes)) {
+    if ($this->arguments['source_connection'] == 'mali') {
+      // Move Inter Coordination cluster to Inter-Cmister Coordination theme
+      if (!empty($row->field_clusters) && in_array(433, $row->field_clusters)) {
         $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
       }
-
-      // Move Public Information Unit Local theme to Public Information Unit theme
-      if (!empty($row->field_local_themes) && in_array(1102, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Public Information Unit", 'hr_theme');
-        $tid = reset(array_keys($terms));
-        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
-        node_save($entity);
-      }
-
-      // Move Kabul Informal Settlement Local theme to KIS theme
-      if (!empty($row->field_local_themes) && in_array(1093, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Kabul Informal Settlement", 'hr_theme');
-        $tid = reset(array_keys($terms));
-        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
-        node_save($entity);
-      }
-
-      
     }
   }
 
@@ -862,6 +839,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'niger':
         $timezone = 'Africa/Niamey';
+        break;
+      case 'mali':
+        $timezone = 'Africa/Bamako';
         break;
     }
     $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
@@ -1746,6 +1726,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'zw' => 'Zimbabwe',
       'haiti' => 'Haiti',
       'niger' => 'Niger',
+      'mali' => 'Mali',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
