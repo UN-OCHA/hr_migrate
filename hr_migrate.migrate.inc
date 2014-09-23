@@ -262,6 +262,7 @@ class HRMigration extends DrupalNode7Migration {
       'haiti' => 'Haiti',
       'niger' => 'Niger',
       'mali' => 'Mali',
+      'indonesia' => 'Indonesia',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -842,6 +843,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'mali':
         $timezone = 'Africa/Bamako';
+        break;
+      case 'indonesia':
+        $timezone = 'Asia/Jakarta';
         break;
     }
     $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
@@ -1727,6 +1731,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'haiti' => 'Haiti',
       'niger' => 'Niger',
       'mali' => 'Mali',
+      'indonesia' => 'Indonesia',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
