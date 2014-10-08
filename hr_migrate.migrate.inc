@@ -297,7 +297,8 @@ class HRMigration extends DrupalNode7Migration {
           }
         }
         else {
-          debug('COULD NOT FIND LOCATIONS FOR NID' . $row->nid);
+          debug('COULD NOT FIND LOCATIONS');
+          $titles[] = 'West and Central Africa';
         }
       }
     }
