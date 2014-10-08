@@ -273,6 +273,7 @@ class HRMigration extends DrupalNode7Migration {
           "Liberia" => 'Liberia'
         );
         // Get locations from row
+        debug($row);
         $tids = $row->field_locations;
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
