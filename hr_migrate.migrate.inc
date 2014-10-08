@@ -1694,18 +1694,28 @@ class HRUserMigration extends DrupalUser7Migration {
     return $term_name;
   }
 
-  protected function getProfileLocations($uid) {
+  protected function getProfileLocations($pid) {
     $query = Database::getConnection('default', $this->sourceConnection)
              ->select('field_data_field_locations', 'f')
              ->fields('f', array('field_locations_tid'))
              ->condition('entity_type', 'profile2')
-             ->condition('entity_id', $uid);
+             ->condition('entity_id', $pid);
     $result = $query->execute();
     $tids = array();
     while($row = $result->fetchAssoc()) {
       $tids[] = isset($row['field_locations_tid']) ? $row['field_locations_tid'] : '';
     }
     return $tids;
+  }
+
+  protected function getProfileFromUid($uid) {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('profile', 'p')
+             ->fields('p', array('pid'))
+             ->condition('uid', $uid);
+    $result = $query->execute()->fetchAssoc();
+    $pid = isset($result['pid']) ? $result['pid'] : '';
+    return $pid;
   }
 
   public function complete($entity, $row) {
@@ -1767,7 +1777,8 @@ class HRUserMigration extends DrupalUser7Migration {
           "Liberia" => 'Liberia'
         );
         // Get locations from row
-        $tids = $this->getProfileLocations($row->uid);
+        $pid = $this->getProfileFromUid($row->uid);
+        $tids = $this->getProfileLocations($pid);
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
           $titles[] = $wca_operations[$location];
