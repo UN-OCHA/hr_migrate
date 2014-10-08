@@ -43,7 +43,9 @@ class HRMigration extends DrupalNode7Migration {
       }
     }
     else {
-      debug('Could not find term with PCode '.$val.' in current database');
+      if ($val != 'WCA') {
+        debug('Could not find term with PCode '.$val.' in current database');
+      }
     }
     return $return;
   }
@@ -849,10 +851,30 @@ class HREventsMigration extends HRMigration {
         $timezone = 'Africa/Khartoum';
         break;
     }
-    $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
+    if ($this->arguments['source_connection'] == 'wca') {
+      $this->addFieldMapping('field_event_data:timezone')->callbacks(array($this, 'fieldEventDateTimezone'));
+    }
+    else {
+      $this->addFieldMapping('field_event_date:timezone')->defaultValue($timezone);
+    }
 
     $this->addFieldMapping('field_event_category', 'field_event_category')->callbacks(array($this, 'fieldEventCategory'));
 
+  }
+
+  protected function fieldEventDateTimezone($value) {
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
+    $node = node_load($gid);
+    $timezone = NULL;
+    switch ($node->title) {
+      case 'West and Central Africa':
+        $timezone = 'Africa/Dakar';
+        break;
+      case 'Benin':
+        $timezone = 'Africa/Cotonou';
+        break;
+    }
   }
 
   protected function fieldEventCategory($value) {
