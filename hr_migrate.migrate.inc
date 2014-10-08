@@ -273,12 +273,15 @@ class HRMigration extends DrupalNode7Migration {
         );
         // Get locations from row
         $tids = $row->field_locations;
+        $i = 0;
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
-          $titles[] = $wca_operations[$location];
+          $titles[$i] = $wca_operations[$location];
+          $i++;
         }
       }
     }
+    $i = 0;
     foreach ($titles as $title) {
       $query = new EntityFieldQuery();
       $entities = $query
@@ -289,7 +292,8 @@ class HRMigration extends DrupalNode7Migration {
       if (!empty($entities['node'])) {
         if (count($entities['node']) == 1) {
           $target_id = reset(array_keys($entities['node']));
-          $target_ids[] = array('target_id' => $target_id);
+          $target_ids[$i] = array('target_id' => $target_id);
+          $i++;
         }
       }
     }
