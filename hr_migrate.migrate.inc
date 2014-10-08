@@ -251,25 +251,39 @@ class HRMigration extends DrupalNode7Migration {
         $titles = array();
         $wca_operations = array(
           "Afrique de l'Ouest et du Centre" => 'West and Central Africa',
+          'West and Central Africa' => 'West and Central Africa',
           "Bénin" => "Benin",
+          'Benin' => 'Benin',
           "Ghana" => "Ghana",
           "Guinée-Bissau" => "Guinea Bissau",
+          'Guinea Bissau' => 'Guinea Bissau',
           "République du Congo" => 'Congo',
+          'Congo Republic' => 'Congo',
           "Republique Centrafricaine" => 'Central African Republic',
+          'Central African Republic' => 'Central African Republic',
           "Niger" => 'Niger',
           "Mauritanie" => 'Mauritania',
+          'Mauritania' => 'Mauritania',
           "République Démocratique du Congo" => 'Democratic Republic of Congo',
+          'Democratic Republic of Congo' => 'Democratic Republic of Congo',
           "Sénégal" => 'Senegal',
+          'Senegal' => 'Senegal',
           "Togo" => 'Togo',
           "Tchad" => 'Chad',
+          'Chad' => 'Chad',
           "Sierra Leone" => 'Sierra Leone',
           "Mali" => 'Mali',
           "Nigeria" => 'Nigeria',
           "Cameroun" => 'Cameroon',
+          'Cameroon' => 'Cameroon',
           "Burkina-Faso" => 'Burkina Faso',
+          'Burkina Faso' => 'Burkina Faso',
           "Côte d'Ivoire" => "Ivory Coast",
+          'Ivory Coast' => 'Ivory Coast',
           "Gambie" => 'Gambia',
+          'Gambia' => 'Gambia',
           "Guinée" => 'Guinea',
+          'Guinea' => 'Guinea',
           "Liberia" => 'Liberia'
         );
         // Get locations from row
@@ -277,8 +291,7 @@ class HRMigration extends DrupalNode7Migration {
           $tids = $row->field_locations;
           foreach ($tids as $tid) {
             $location = $this->getLegacyTermName($tid);
-            debug($location);
-            debug($wca_operations[$location]);
+            debug($location.';'.$wca_operations[$location]);
             $titles[] = $wca_operations[$location];
           }
         }
