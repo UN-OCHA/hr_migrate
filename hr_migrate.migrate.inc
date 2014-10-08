@@ -138,9 +138,7 @@ class HRMigration extends DrupalNode7Migration {
   }
 
   protected function fieldBundles($value) {
-    debug($this->source->current());
     $gids = $this->getSpaces($this->source->current());
-    debug($gids);
     $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_bundle', $gid);
   }
@@ -279,6 +277,8 @@ class HRMigration extends DrupalNode7Migration {
           $tids = $row->field_locations;
           foreach ($tids as $tid) {
             $location = $this->getLegacyTermName($tid);
+            debug($location);
+            debug($wca_operations[$location]);
             $titles[] = $wca_operations[$location];
           }
         }
