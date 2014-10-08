@@ -151,17 +151,20 @@ class HRMigration extends DrupalNode7Migration {
   }
 
   protected function fieldBundles($value) {
-    $gid = $this->getSpace();
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_bundle', $gid);
   }
 
   protected function fieldDisasters($value) {
-    $gid = $this->getSpace();
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_disaster', $gid);
   }
 
   protected function fieldCoordinationHubs($value) {
-    $gid = $this->getSpace();
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_office', $gid);
   }
 
@@ -189,7 +192,8 @@ class HRMigration extends DrupalNode7Migration {
   }
 
   protected function fieldFundingMethods($value) {
-    $gid = $this->getSpace();
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_funding_method', $gid);
   }
 
@@ -233,24 +237,8 @@ class HRMigration extends DrupalNode7Migration {
     }
   }
 
-  protected function getSpace() {
-    $target_id = NULL;
-    $groups = array(
-      'clusters' => 'Clusters',
-      'imwg' => 'Information Management Working Group',
-      'ir' => 'Indicators Registry',
-      'er' => 'Early Recovery',
-      'assessments' => 'Humanitarian Programme Cycle',
-      'cod' => 'Data',
-    );
-    $type = 'hr_space';
-    if ($this->arguments['source_connection'] == 'er') {
-      $type = 'hr_sector';
-    }
-    $title = '';
-    if (in_array($this->arguments['source_connection'], array_keys($groups))) {
-      $title = $groups[$this->arguments['source_connection']];
-    }
+  protected function getSpaces($row) {
+    $target_ids = array();
     $operations = array(
       'ethiopia' => 'Ethiopia',
       'somalia' => 'Somalia',
@@ -268,20 +256,57 @@ class HRMigration extends DrupalNode7Migration {
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
-      $title = $operations[$this->arguments['source_connection']];
+      $titles = array($operations[$this->arguments['source_connection']]);
     }
-    $query = new EntityFieldQuery();
-    $entities = $query
-      ->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', $type)
-      ->propertyCondition('title', $title)
-      ->execute();
-    if (!empty($entities['node'])) {
-      if (count($entities['node']) == 1) {
-        $target_id = reset(array_keys($entities['node']));
+    else {
+      if ($this->arguments['source_connection'] == 'wca') {
+        $titles = array();
+        $wca_operations = array(
+          "Afrique de l'Ouest et du Centre" => 'West and Central Africa',
+          "Bénin" => "Benin",
+          "Ghana" => "Ghana",
+          "Guinée-Bissau" => "Guinea Bissau",
+          "République du Congo" => 'Congo',
+          "Republique Centrafricaine" => 'Central African Republic',
+          "Niger" => 'Niger',
+          "Mauritanie" => 'Mauritania',
+          "République Démocratique du Congo" => 'Democratic Republic of Congo',
+          "Sénégal" => 'Senegal',
+          "Togo" => 'Togo',
+          "Tchad" => 'Chad',
+          "Sierra Leone" => 'Sierra Leone',
+          "Mali" => 'Mali',
+          "Nigeria" => 'Nigeria',
+          "Cameroun" => 'Cameroon',
+          "Burkina-Faso" => 'Burkina Faso',
+          "Côte d'Ivoire" => "Ivory Coast",
+          "Gambie" => 'Gambia',
+          "Guinée" => 'Guinea',
+          "Liberia" => 'Liberia'
+        );
+        // Get locations from row
+        $tids = $row->field_locations;
+        foreach ($tids as $tid) {
+          $location = $this->getLegacyTermName($tid);
+          $titles[] = $wca_operations[$location];
+        }
       }
     }
-    return $target_id;
+    foreach ($titles as $title) {
+      $query = new EntityFieldQuery();
+      $entities = $query
+        ->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $type)
+        ->propertyCondition('title', $title)
+        ->execute();
+      if (!empty($entities['node'])) {
+        if (count($entities['node']) == 1) {
+          $target_id = reset(array_keys($entities['node']));
+          $target_ids[] = array('target_id' => $target_id);
+        }
+      }
+    }
+    return $target_ids;
   }
 
   public function complete($entity, $row) {
@@ -522,40 +547,7 @@ class HRPagesMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] == 'www') {
-      $valid_paths = array(
-        'coordination/humanitarian-leadership' => 'Humanitarian Leadership',
-        'themes/gencap' => 'GenCap',
-        'themes/procap' => 'ProCap',
-        'themes/accountability-to-affected-people' => 'Accountability to Affected People',
-        'themes/age' => 'Age',
-        'themes/environment' => 'Environment',
-        'themes/gender' => 'Gender',
-      );
-      foreach ($valid_paths as $path => $space_title) {
-        if (strpos($row->path, $path) !== FALSE) {
-          $space = NULL;
-          // Get space id
-          $query = new EntityFieldQuery();
-          $entities = $query
-            ->entityCondition('entity_type', 'node')
-            ->entityCondition('bundle', 'hr_space')
-            ->propertyCondition('title', $space_title)
-            ->execute();
-          if (!empty($entities['node'])) {
-            if (count($entities['node']) == 1) {
-              $space = reset(array_keys($entities['node']));
-            }
-          }
-          if (!empty($space)) {
-            $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $space;
-          }
-        }
-      }
-    }
-    else {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -616,9 +608,7 @@ class HRDocumentMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -684,9 +674,7 @@ class HRInfographicMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -750,9 +738,7 @@ class HRNewsMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -871,9 +857,7 @@ class HREventsMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -932,7 +916,7 @@ class HREventsMigration extends HRMigration {
     unset($document->field_publication_date[LANGUAGE_NONE][0]['value2']);
     unset($document->field_publication_date[LANGUAGE_NONE][0]['rrule']);
     $document->group_content_access[LANGUAGE_NONE][0]['value'] = 0;
-    $document->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+    $document->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
     $document->path['pathauto'] = TRUE;
     $document->uid = $node->uid;
     node_save($document);
@@ -1115,9 +1099,7 @@ class HRIndicatorsMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -1175,9 +1157,7 @@ class HRTrainingsMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -1274,7 +1254,7 @@ class HRDatasetsMigration extends HRMigration {
       }
       else {
         debug('Could not find operation with title '.$term_name);
-        $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
+        $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
       }
     }
   }
@@ -1464,21 +1444,22 @@ class HRContactsMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $row->path = 'profile/'.$row->pid;
     if (isset($row->uid) && !is_null($row->uid)) {
-      $gid = $this->getSpace();
+      $gids = $this->getSpaces($row);
       $user = user_load($entity->uid);
-      // Ungroup user
-      og_ungroup('node', $gid, 'user', $entity->uid);
-      //Make user a responder of group
-      og_group('node', $gid, array('entity_type' => 'user', 'entity' => $user, 'field_name' => 'field_responder_in', 'field_contact_information' => $entity->nid));
+      foreach ($gids as $target_id) {
+        $gid = $target_id['target_id'];
+        // Ungroup user
+        og_ungroup('node', $gid, 'user', $entity->uid);
+        //Make user a responder of group
+        og_group('node', $gid, array('entity_type' => 'user', 'entity' => $user, 'field_name' => 'field_responder_in', 'field_contact_information' => $entity->nid));
+      }
     }
     $this->redirect($entity, $row);
   }
@@ -1680,9 +1661,7 @@ class HRAssessmentMigration extends HRMigration {
   }
 
   public function prepare($entity, $row) {
-    if ($this->arguments['source_connection'] != 'www') {
-      $entity->og_group_ref[LANGUAGE_NONE][0]['target_id'] = $this->getSpace();
-    }
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
   }
 
   public function complete($entity, $row) {
@@ -1712,7 +1691,8 @@ class HRAssessmentMigration extends HRMigration {
   }
 
   protected function fieldGeographicLevel($value) {
-    $gid = $this->getSpace();
+    $gids = $this->getSpaces($this->source->current());
+    $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_geographic_level', $gid);
   }
 
@@ -1720,14 +1700,28 @@ class HRAssessmentMigration extends HRMigration {
 
 class HRUserMigration extends DrupalUser7Migration {
 
-  public function complete($entity, $row) {
-    parent::complete($entity, $row);
-    $gid = $this->getSpace();
-    //Make user a member of group
-    og_group('node', $gid, array('entity_type' => 'user', 'entity' => $entity, 'field_name' => 'og_user_node'));
+  protected function getLegacyTermName($val) {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('taxonomy_term_data', 't')
+             ->fields('t', array('name'))
+             ->condition('tid', $val);
+    $result = $query->execute()->fetchAssoc();
+    $term_name = isset($result['name']) ? $result['name'] : '';
+    return $term_name;
   }
 
-  protected function getSpace() {
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $gids = $this->getSpaces($row);
+    foreach ($gids as $target_id) {
+      $gid = $target_id['target_id'];
+      //Make user a member of group
+      og_group('node', $gid, array('entity_type' => 'user', 'entity' => $entity, 'field_name' => 'og_user_node'));
+    }
+  }
+
+  protected function getSpaces($row) {
+    $target_ids = array();
     $operations = array(
       'ethiopia' => 'Ethiopia',
       'somalia' => 'Somalia',
@@ -1745,19 +1739,56 @@ class HRUserMigration extends DrupalUser7Migration {
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
-      $title = $operations[$this->arguments['source_connection']];
+      $titles = array($operations[$this->arguments['source_connection']]);
     }
-    $query = new EntityFieldQuery();
-    $entities = $query
-      ->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', $type)
-      ->propertyCondition('title', $title)
-      ->execute();
-    if (!empty($entities['node'])) {
-      if (count($entities['node']) == 1) {
-        $target_id = reset(array_keys($entities['node']));
+    else {
+      if ($this->arguments['source_connection'] == 'wca') {
+        $titles = array();
+        $wca_operations = array(
+          "Afrique de l'Ouest et du Centre" => 'West and Central Africa',
+          "Bénin" => "Benin",
+          "Ghana" => "Ghana",
+          "Guinée-Bissau" => "Guinea Bissau",
+          "République du Congo" => 'Congo',
+          "Republique Centrafricaine" => 'Central African Republic',
+          "Niger" => 'Niger',
+          "Mauritanie" => 'Mauritania',
+          "République Démocratique du Congo" => 'Democratic Republic of Congo',
+          "Sénégal" => 'Senegal',
+          "Togo" => 'Togo',
+          "Tchad" => 'Chad',
+          "Sierra Leone" => 'Sierra Leone',
+          "Mali" => 'Mali',
+          "Nigeria" => 'Nigeria',
+          "Cameroun" => 'Cameroon',
+          "Burkina-Faso" => 'Burkina Faso',
+          "Côte d'Ivoire" => "Ivory Coast",
+          "Gambie" => 'Gambia',
+          "Guinée" => 'Guinea',
+          "Liberia" => 'Liberia'
+        );
+        // Get locations from row
+        $tids = $row->field_locations;
+        foreach ($tids as $tid) {
+          $location = $this->getLegacyTermName($tid);
+          $titles[] = $wca_operations[$location];
+        }
       }
     }
-    return $target_id;
+    foreach ($titles as $title) {
+      $query = new EntityFieldQuery();
+      $entities = $query
+        ->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $type)
+        ->propertyCondition('title', $title)
+        ->execute();
+      if (!empty($entities['node'])) {
+        if (count($entities['node']) == 1) {
+          $target_id = reset(array_keys($entities['node']));
+          $target_ids[] = array('target_id' => $target_id);
+        }
+      }
+    }
+    return $target_ids;
   }
 }
