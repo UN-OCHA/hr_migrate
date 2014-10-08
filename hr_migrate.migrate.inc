@@ -264,8 +264,8 @@ class HRMigration extends DrupalNode7Migration {
           "Niger" => 'Niger',
           "Mauritanie" => 'Mauritania',
           'Mauritania' => 'Mauritania',
-          "République Démocratique du Congo" => 'Democratic Republic of Congo',
-          'Democratic Republic of Congo' => 'Democratic Republic of Congo',
+          "République Démocratique du Congo" => 'Democratic Republic of the Congo',
+          'Democratic Republic of Congo' => 'Democratic Republic of the Congo',
           "Sénégal" => 'Senegal',
           'Senegal' => 'Senegal',
           "Togo" => 'Togo',
@@ -291,7 +291,6 @@ class HRMigration extends DrupalNode7Migration {
           $tids = $row->field_locations;
           foreach ($tids as $tid) {
             $location = $this->getLegacyTermName($tid);
-            debug($location.';'.$wca_operations[$location]);
             $titles[] = $wca_operations[$location];
           }
         }
