@@ -87,19 +87,6 @@ class HRMigration extends DrupalNode7Migration {
     $return  = array();
     foreach ($value as $i => $val) {
       $term_name = $this->getLegacyTermName($val);
-      if ($this->arguments['source_connection'] == 'philippines' && $type == 'hr_sector') {
-        switch($term_name) {
-          case 'Early Recovery and Livelihood':
-            $term_name = 'Early Recovery';
-            break;
-          case 'Emergency Shelter':
-            $term_name = 'Emergency Shelter and NFI';
-            break;
-          case 'Food Security and Agriculture':
-            $term_name = 'Food Security';
-            break;
-        }
-      }
       if (!empty($term_name)) {
         $query = new EntityFieldQuery();
         $query
@@ -318,9 +305,9 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
-    if ($this->arguments['source_connection'] == 'mali') {
-      // Move Inter Coordination cluster to Inter-Cmister Coordination theme
-      if (!empty($row->field_clusters) && in_array(433, $row->field_clusters)) {
+    if ($this->arguments['source_connection'] == 'wca') {
+      // Move Inter-sectors cluster to Inter-Cluster Coordination theme
+      if (!empty($row->field_clusters) && in_array(1333, $row->field_clusters)) {
         $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
@@ -846,10 +833,6 @@ class HREventsMigration extends HRMigration {
 
     $this->addFieldMapping('field_event_category', 'field_event_category')->callbacks(array($this, 'fieldEventCategory'));
 
-    if ($this->arguments['source_connection'] == 'www') {
-      $this->addFieldMapping('og_group_ref', 'field_themes')->callbacks(array($this, 'fieldGroupAudience'));
-    }
-    
   }
 
   protected function fieldEventCategory($value) {
