@@ -872,7 +872,64 @@ class HREventsMigration extends HRMigration {
         $timezone = 'Africa/Dakar';
         break;
       case 'Benin':
-        $timezone = 'Africa/Cotonou';
+        $timezone = 'Africa/Porto-Novo';
+        break;
+      case 'Ghana':
+        $timezone = 'Africa/Accra';
+        break;
+      case 'Guinea Bissau':
+        $timezone = 'Africa/Bissau';
+        break;
+      case 'Congo':
+        $timezone = 'Africa/Brazzaville';
+        break;
+      case 'Central African Republic':
+        $timezone = 'Africa/Bangui';
+        break;
+      case 'Niger':
+        $timezone = 'Africa/Niamey';
+        break;
+      case 'Mauritania':
+        $timezone = 'Africa/Nouakchott';
+        break;
+      case 'Democratic Republic of the Congo':
+        $timezone = 'Africa/Kinshasa';
+        break;
+      case 'Senegal':
+        $timezone = 'Africa/Dakar';
+        break;
+      case 'Togo':
+        $timezone = 'Africa/Lome';
+        break;
+      case 'Chad':
+        $timezone = 'Africa/Ndjamena';
+        break;
+      case 'Sierra Leone':
+        $timezone = 'Africa/Freetown';
+        break;
+      case 'Mali':
+        $timezone = 'Africa/Bamako';
+        break;
+      case 'Nigeria':
+        $timezone = 'Africa/Lagos';
+        break;
+      case 'Cameroon':
+        $timezone = 'Africa/Douala';
+        break;
+      case 'Burkina Faso':
+        $timezone = 'Africa/Ouagadougou';
+        break;
+      case 'Ivory Coast':
+        $timezone = 'Africa/Abidjan';
+        break;
+      case 'Gambia':
+        $timezone = 'Africa/Banjul';
+        break;
+      case 'Guinea':
+        $timezone = 'Africa/Conakry';
+        break;
+      case 'Liberia':
+        $timezone = 'Africa/Monrovia';
         break;
     }
   }
