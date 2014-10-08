@@ -246,6 +246,7 @@ class HRMigration extends DrupalNode7Migration {
       $titles = array($operations[$this->arguments['source_connection']]);
     }
     else {
+      $type = 'hr_operation';
       if ($this->arguments['source_connection'] == 'wca') {
         $titles = array();
         $wca_operations = array(
@@ -1739,6 +1740,7 @@ class HRUserMigration extends DrupalUser7Migration {
       $titles = array($operations[$this->arguments['source_connection']]);
     }
     else {
+      $type = 'hr_operation';
       if ($this->arguments['source_connection'] == 'wca') {
         $titles = array();
         $wca_operations = array(
