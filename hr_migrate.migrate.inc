@@ -1693,6 +1693,20 @@ class HRUserMigration extends DrupalUser7Migration {
     return $term_name;
   }
 
+  protected function getProfileLocations($uid) {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_field_locations', 'f')
+             ->fields('f', array('field_locations_tid'))
+             ->condition('entity_type', 'profile2')
+             ->condition('entity_id', $uid);
+    $result = $query->execute();
+    $tids = array();
+    while($row = $result->fetchAssoc()) {
+      $tids[] = isset($row['field_locations_tid']) ? $row['field_locations_tid'] : '';
+    }
+    return $tids;
+  }
+
   public function complete($entity, $row) {
     parent::complete($entity, $row);
     $gids = $this->getSpaces($row);
@@ -1751,7 +1765,7 @@ class HRUserMigration extends DrupalUser7Migration {
           "Liberia" => 'Liberia'
         );
         // Get locations from row
-        $tids = $row->field_locations;
+        $tids = $this->getProfileLocations($row->uid);
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
           $titles[] = $wca_operations[$location];
