@@ -273,11 +273,15 @@ class HRMigration extends DrupalNode7Migration {
           "Liberia" => 'Liberia'
         );
         // Get locations from row
-        debug($row);
-        $tids = $row->field_locations;
-        foreach ($tids as $tid) {
-          $location = $this->getLegacyTermName($tid);
-          $titles[] = $wca_operations[$location];
+        if (isset($row->field_locations)) {
+          $tids = $row->field_locations;
+          foreach ($tids as $tid) {
+            $location = $this->getLegacyTermName($tid);
+            $titles[] = $wca_operations[$location];
+          }
+        }
+        else {
+          debug('COULD NOT FIND LOCATIONS FOR NID' . $row->nid);
         }
       }
     }
