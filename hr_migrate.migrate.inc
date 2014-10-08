@@ -138,7 +138,9 @@ class HRMigration extends DrupalNode7Migration {
   }
 
   protected function fieldBundles($value) {
+    debug($this->source->current());
     $gids = $this->getSpaces($this->source->current());
+    debug($gids);
     $gid = $gids[0]['target_id'];
     return $this->translateNodes($value, 'hr_bundle', $gid);
   }
