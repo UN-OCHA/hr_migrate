@@ -1754,7 +1754,7 @@ class HRUserMigration extends DrupalUser7Migration {
         $tids = $row->field_locations;
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
-          $titles[] = $wca_operations[$location];
+          $titles[] = $wca_operations[$location];
         }
       }
     }
