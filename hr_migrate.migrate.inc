@@ -266,8 +266,8 @@ class HRMigration extends DrupalNode7Migration {
           "Niger" => 'Niger',
           "Mauritanie" => 'Mauritania',
           'Mauritania' => 'Mauritania',
-          "République Démocratique du Congo" => 'Democratic Republic of the Congo',
-          'Democratic Republic of Congo' => 'Democratic Republic of the Congo',
+          "République Démocratique du Congo" => 'Democratic Republic of Congo',
+          'Democratic Republic of Congo' => 'Democratic Republic of Congo',
           "Sénégal" => 'Senegal',
           'Senegal' => 'Senegal',
           "Togo" => 'Togo',
@@ -893,7 +893,7 @@ class HREventsMigration extends HRMigration {
       case 'Mauritania':
         $timezone = 'Africa/Nouakchott';
         break;
-      case 'Democratic Republic of the Congo':
+      case 'Democratic Republic of Congo':
         $timezone = 'Africa/Kinshasa';
         break;
       case 'Senegal':
