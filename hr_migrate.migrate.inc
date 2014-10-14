@@ -249,56 +249,35 @@ class HRMigration extends DrupalNode7Migration {
     }
     else {
       $type = 'hr_operation';
-      if ($this->arguments['source_connection'] == 'wca') {
+      if ($this->arguments['source_connection'] == 'pht') {
         $titles = array();
-        $wca_operations = array(
-          "Afrique de l'Ouest et du Centre" => 'West and Central Africa',
-          'West and Central Africa' => 'West and Central Africa',
-          "Bénin" => "Benin",
-          'Benin' => 'Benin',
-          "Ghana" => "Ghana",
-          "Guinée-Bissau" => "Guinea Bissau",
-          'Guinea Bissau' => 'Guinea Bissau',
-          "République du Congo" => 'Congo',
-          'Congo Republic' => 'Congo',
-          "Republique Centrafricaine" => 'Central African Republic',
-          'Central African Republic' => 'Central African Republic',
-          "Niger" => 'Niger',
-          "Mauritanie" => 'Mauritania',
-          'Mauritania' => 'Mauritania',
-          "République Démocratique du Congo" => 'Democratic Republic of Congo',
-          'Democratic Republic of Congo' => 'Democratic Republic of Congo',
-          "Sénégal" => 'Senegal',
-          'Senegal' => 'Senegal',
-          "Togo" => 'Togo',
-          "Tchad" => 'Chad',
-          'Chad' => 'Chad',
-          "Sierra Leone" => 'Sierra Leone',
-          "Mali" => 'Mali',
-          "Nigeria" => 'Nigeria',
-          "Cameroun" => 'Cameroon',
-          'Cameroon' => 'Cameroon',
-          "Burkina-Faso" => 'Burkina Faso',
-          'Burkina Faso' => 'Burkina Faso',
-          "Côte d'Ivoire" => "Ivory Coast",
-          'Ivory Coast' => 'Ivory Coast',
-          "Gambie" => 'Gambia',
-          'Gambia' => 'Gambia',
-          "Guinée" => 'Guinea',
-          'Guinea' => 'Guinea',
-          "Liberia" => 'Liberia'
+        $pht_operations = array(
+          'Cook Islands' => 'Cook Islands',
+          'Fiji' => 'Fiji',
+          'FSM' => 'Federated States of Micronesia',
+          'Kiribati' => 'Kiribati',
+          'Marshall Islands' => 'Marshall Islands',
+          'Nauru' => 'Nauru',
+          'Niue' => 'Niue',
+          'Palau' => 'Palau',
+          'Samoa' => 'Samoa',
+          'Solomon Islands' => 'Solomon Islands',
+          'Tokelau' => 'Tokelau',
+          'Tonga' => 'Tonga',
+          'Tuvalu' => 'Tuvalu',
+          'Vanuatu' => 'Vanuatu',
         );
         // Get locations from row
         if (isset($row->field_locations)) {
           $tids = $row->field_locations;
           foreach ($tids as $tid) {
             $location = $this->getLegacyTermName($tid);
-            $titles[] = $wca_operations[$location];
+            $titles[] = $pht_operations[$location];
           }
         }
         else {
           debug('COULD NOT FIND LOCATIONS');
-          $titles[] = 'West and Central Africa';
+          $titles[] = 'Pacific Region';
         }
       }
     }
@@ -852,7 +831,7 @@ class HREventsMigration extends HRMigration {
         $timezone = 'Africa/Khartoum';
         break;
     }
-    if ($this->arguments['source_connection'] == 'wca') {
+    if ($this->arguments['source_connection'] == 'pht') {
       $this->addFieldMapping('field_event_data:timezone')->callbacks(array($this, 'fieldEventDateTimezone'));
     }
     else {
@@ -869,68 +848,50 @@ class HREventsMigration extends HRMigration {
     $node = node_load($gid);
     $timezone = NULL;
     switch ($node->title) {
-      case 'West and Central Africa':
-        $timezone = 'Africa/Dakar';
+      case 'Pacific Region':
+        $timezone = 'Pacific/Guadalcanal';
         break;
-      case 'Benin':
-        $timezone = 'Africa/Porto-Novo';
+      case 'Cook Islands':
+        $timezone = 'Pacific/Rarotonga';
         break;
-      case 'Ghana':
-        $timezone = 'Africa/Accra';
+      case 'Fiji':
+        $timezone = 'Pacific/Fiji';
         break;
-      case 'Guinea Bissau':
-        $timezone = 'Africa/Bissau';
+      case 'Federated States of Micronesia':
+        $timezone = 'Pacific/Pohnpei';
         break;
-      case 'Congo':
-        $timezone = 'Africa/Brazzaville';
+      case 'Kiribati':
+        $timezone = 'Pacific/Tarawa';
         break;
-      case 'Central African Republic':
-        $timezone = 'Africa/Bangui';
+      case 'Marshall Islands':
+        $timezone = 'Pacific/Majuro';
         break;
-      case 'Niger':
-        $timezone = 'Africa/Niamey';
+      case 'Nauru':
+        $timezone = 'Pacific/Nauru';
         break;
-      case 'Mauritania':
-        $timezone = 'Africa/Nouakchott';
+      case 'Niue':
+        $timezone = 'Pacific/Niue';
         break;
-      case 'Democratic Republic of Congo':
-        $timezone = 'Africa/Kinshasa';
+      case 'Palau':
+        $timezone = 'Pacific/Palau';
         break;
-      case 'Senegal':
-        $timezone = 'Africa/Dakar';
+      case 'Samoa':
+        $timezone = 'Pacific/Apia';
         break;
-      case 'Togo':
-        $timezone = 'Africa/Lome';
+      case 'Solomon Islands':
+        $timezone = 'Pacific/Guadalcanal';
         break;
-      case 'Chad':
-        $timezone = 'Africa/Ndjamena';
+      case 'Tokelau':
+        $timezone = 'Pacific/Fakaofo';
         break;
-      case 'Sierra Leone':
-        $timezone = 'Africa/Freetown';
+      case 'Tonga':
+        $timezone = 'Pacific/Tongatapu';
         break;
-      case 'Mali':
-        $timezone = 'Africa/Bamako';
+      case 'Tuvalu':
+        $timezone = 'Pacific/Funafuti';
         break;
-      case 'Nigeria':
-        $timezone = 'Africa/Lagos';
-        break;
-      case 'Cameroon':
-        $timezone = 'Africa/Douala';
-        break;
-      case 'Burkina Faso':
-        $timezone = 'Africa/Ouagadougou';
-        break;
-      case 'Ivory Coast':
-        $timezone = 'Africa/Abidjan';
-        break;
-      case 'Gambia':
-        $timezone = 'Africa/Banjul';
-        break;
-      case 'Guinea':
-        $timezone = 'Africa/Conakry';
-        break;
-      case 'Liberia':
-        $timezone = 'Africa/Monrovia';
+      case 'Vanuatu':
+        $timezone = 'Pacific/Efate';
         break;
     }
   }
@@ -1850,37 +1811,30 @@ class HRUserMigration extends DrupalUser7Migration {
     }
     else {
       $type = 'hr_operation';
-      if ($this->arguments['source_connection'] == 'wca') {
+      if ($this->arguments['source_connection'] == 'pht') {
         $titles = array();
-        $wca_operations = array(
-          "Afrique de l'Ouest et du Centre" => 'West and Central Africa',
-          "Bénin" => "Benin",
-          "Ghana" => "Ghana",
-          "Guinée-Bissau" => "Guinea Bissau",
-          "République du Congo" => 'Congo',
-          "Republique Centrafricaine" => 'Central African Republic',
-          "Niger" => 'Niger',
-          "Mauritanie" => 'Mauritania',
-          "République Démocratique du Congo" => 'Democratic Republic of Congo',
-          "Sénégal" => 'Senegal',
-          "Togo" => 'Togo',
-          "Tchad" => 'Chad',
-          "Sierra Leone" => 'Sierra Leone',
-          "Mali" => 'Mali',
-          "Nigeria" => 'Nigeria',
-          "Cameroun" => 'Cameroon',
-          "Burkina-Faso" => 'Burkina Faso',
-          "Côte d'Ivoire" => "Ivory Coast",
-          "Gambie" => 'Gambia',
-          "Guinée" => 'Guinea',
-          "Liberia" => 'Liberia'
+        $pht_operations = array(
+          'Cook Islands' => 'Cook Islands',
+          'Fiji' => 'Fiji',
+          'FSM' => 'Federated States of Micronesia',
+          'Kiribati' => 'Kiribati',
+          'Marshall Islands' => 'Marshall Islands',
+          'Nauru' => 'Nauru',
+          'Niue' => 'Niue',
+          'Palau' => 'Palau',
+          'Samoa' => 'Samoa',
+          'Solomon Islands' => 'Solomon Islands',
+          'Tokelau' => 'Tokelau',
+          'Tonga' => 'Tonga',
+          'Tuvalu' => 'Tuvalu',
+          'Vanuatu' => 'Vanuatu',
         );
         // Get locations from row
         $pid = $this->getProfileFromUid($row->uid);
         $tids = $this->getProfileLocations($pid);
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
-          $titles[] = $wca_operations[$location];
+          $titles[] = $pht_operations[$location];
         }
       }
     }
