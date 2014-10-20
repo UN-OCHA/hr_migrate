@@ -242,6 +242,7 @@ class HRMigration extends DrupalNode7Migration {
       'indonesia' => 'Indonesia',
       'syria' => 'Syria',
       'sudan' => 'Sudan',
+      'stima' => 'Turkey',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -829,6 +830,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'sudan':
         $timezone = 'Africa/Khartoum';
+        break;
+      case 'stima':
+        $timezone = 'Europe/Istanbul';
         break;
     }
     if ($this->arguments['source_connection'] == 'pht') {
@@ -1804,6 +1808,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'indonesia' => 'Indonesia',
       'syria' => 'Syria',
       'sudan' => 'Sudan',
+      'stima' => 'Turkey',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
