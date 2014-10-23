@@ -369,6 +369,31 @@ class HRMigration extends DrupalNode7Migration {
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
       }
+
+      // Move local theme KIRA to global theme KIRA
+      if (!empty($row->field_local_themes) && in_array(1149, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move local theme KIRA Training to global theme KIRA Training
+      if (!empty($row->field_local_themes) && in_array(1168, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment Training", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move local theme KIRA Secondary Data to global theme KIRA Secondary Data
+      if (!empty($row->field_local_themes) && in_array(1153, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment Secondary Data", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
     }
   }
 
