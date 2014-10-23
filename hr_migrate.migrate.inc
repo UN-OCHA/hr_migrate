@@ -243,6 +243,7 @@ class HRMigration extends DrupalNode7Migration {
       'syria' => 'Syria',
       'sudan' => 'Sudan',
       'stima' => 'Turkey',
+      'kenya' => 'Kenya',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -352,9 +353,17 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
-    if ($this->arguments['source_connection'] == 'wca') {
-      // Move Inter-sectors cluster to Inter-Cluster Coordination theme
-      if (!empty($row->field_clusters) && in_array(1333, $row->field_clusters)) {
+    if ($this->arguments['source_connection'] == 'kenya') {
+      // Move Multi-sector cluster to Inter-Cluster Coordination theme
+      if (!empty($row->field_clusters) && in_array(124, $row->field_clusters)) {
+        $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move Inter-Sector cluster to Inter-Cluster Coordination theme
+      if (!empty($row->field_clusters) && in_array(616, $row->field_clusters)) {
         $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
@@ -877,6 +886,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'stima':
         $timezone = 'Europe/Istanbul';
+        break;
+      case 'kenya':
+        $timezone = 'Africa/Nairobi';
         break;
     }
     if ($this->arguments['source_connection'] == 'rosa') {
@@ -1856,6 +1868,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'syria' => 'Syria',
       'sudan' => 'Sudan',
       'stima' => 'Turkey',
+      'kenya' => 'Kenya',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
