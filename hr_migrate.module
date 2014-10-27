@@ -40,6 +40,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('stima', 'stima.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
   hr_migrate_register_site_migration('rosa', 'rosa.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
   hr_migrate_register_site_migration('kenya', 'kenya.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
+  hr_migrate_register_site_migration('chad', 'chad.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
 }
 
 /**
