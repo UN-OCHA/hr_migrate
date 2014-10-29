@@ -1901,14 +1901,19 @@ class HRAccessIncidentMigration extends HRMigration {
     if (empty($translated)) {
       // Get the organization
       $translated = $this->translateTerms($value, 'hr_organization');
-      $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
-      $org_type = taxonomy_term_load($org_type_tid);
-      return array($org_type);
+      if (!empty($translated)) {
+        $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
+        return array($org_type_tid);
+      }
+      else {
+        return $translated;
+      }
     }
     else {
       return $translated;
-    } 
+    }
   }
+
 }
 
 /**
