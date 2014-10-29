@@ -1868,16 +1868,16 @@ class HRAccessIncidentMigration extends HRMigration {
     $this->removeFieldMapping('body:language');
     $this->addFieldMapping('body:language', 'language')->defaultValue('en');
 
-    $timezone = 'Europe/Zurich';
+    /*$timezone = 'Europe/Zurich';
     switch($this->arguments['source_connection']) {
       case 'southsudan':
         $timezone = 'Africa/Juba';
         break;
-    }
+    }*/
 
     $this->addFieldMapping('field_acc_date', 'field_acc_incident_date');
     $this->addFieldMapping('field_acc_date:to', 'field_acc_incident_date:value2');
-    $this->addFieldMapping('field_acc_date:timezone')->defaultValue($timezone);
+    $this->addFieldMapping('field_acc_date:timezone')->defaultValue('UTC');
     $this->addFieldMapping('field_acc_type', 'field_acc_incident_type')->callbacks(array($this, 'fieldAccType'));
     $this->addFieldMapping('field_type_of_affectee', 'field_type_of_affectee')->callbacks(array($this, 'fieldAccTypeAffectee'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
