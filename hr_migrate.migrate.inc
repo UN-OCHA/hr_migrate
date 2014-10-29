@@ -1865,8 +1865,6 @@ class HRAccessIncidentMigration extends HRMigration {
     $this->removeFieldMapping('body:format');
     $this->removeFieldMapping('body:language');*/
 
-    $this->addFieldMapping('group_content_access')->defaultValue(0);
-
     $this->addFieldMapping('field_acc_date', 'field_acc_incident_date');
     $this->addFieldMapping('field_acc_date:to', 'field_acc_incident_date:value2');
     $this->addFieldMapping('field_acc_date:timezone')->defaultValue(date_default_timezone_get());
@@ -1878,8 +1876,6 @@ class HRAccessIncidentMigration extends HRMigration {
     $this->addFieldMapping('field_affected_organization_type', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizationType'));
     $this->addFieldMapping('field_affected_organizations', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_acc_attach_file', 'field_attachments')->sourceMigration($files_migration);
-    $this->addFieldMapping('field_acc_attach_file:display', 'field_attachments:display');
-    $this->addFieldMapping('field_acc_attach_file:description', 'field_attachments:description');
     $this->addFieldMapping('field_acc_attach_file:file_class')->defaultValue('MigrateFileFid');
   }
 
