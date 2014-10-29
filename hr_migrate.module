@@ -238,14 +238,14 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
     Migration::registerMigration('HRAssessmentCollectionQuestionnaireMigration', $questionnaire_arguments['machine_name'], $questionnaire_arguments);
   }
 
-  if (in_array('acc_incident', $content_types)) {
+  /*if (in_array('acc_incident', $content_types)) {
     $acc_impact_arguments = $common_arguments + array(
       'description' => t('Migration of access impacts from '.$site),
       'machine_name' => 'hr_acc_impacts'.$machine_name,
     );
 
     Migration::registerMigration('HRAccImpactsCollectionMigration', $acc_impact_arguments['machine_name'], $acc_impact_arguments);
-  }
+  }*/
 
 
 
