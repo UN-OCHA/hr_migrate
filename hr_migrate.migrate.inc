@@ -1834,6 +1834,144 @@ class HRAssessmentMigration extends HRMigration {
 
 }
 
+/**
+ * Migration of Access Incidents
+ */
+class HRAccessIncidentMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $files_migration = 'hr_files';
+    if ($this->arguments['source_connection'] != 'www') {
+      $files_migration = 'hr_files_'.$this->arguments['source_connection'];
+    }
+    $this->dependencies[] = $files_migration;
+
+    $this->addUnmigratedSources(array(
+      'field_acc_impacts',
+      'field_acc_impacts:revision_id',
+    ));
+    $this->addUnmigratedDestinations(array(
+      'field_acc_impacts',
+    ));
+
+
+    /*$this->removeFieldMapping('body');
+    $this->removeFieldMapping('body:summary');
+    $this->removeFieldMapping('body:format');
+    $this->removeFieldMapping('body:language');*/
+
+    $this->addFieldMapping('group_content_access')->defaultValue(0);
+
+    $this->addFieldMapping('field_acc_date', 'field_acc_incident_date');
+    $this->addFieldMapping('field_acc_date:to', 'field_acc_incident_date:value2');
+    $this->addFieldMapping('field_acc_date:timezone')->defaultValue(date_default_timezone_get());
+    $this->addFieldMapping('field_acc_type', 'field_acc_incident_type')->callbacks(array($this, 'fieldAccType'));
+    $this->addFieldMapping('field_type_of_affectee', 'field_type_of_affectee')->callbacks(array($this, 'fieldAccTypeAffectee'));
+    $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_responsible_organization_t', 'field_responsible_actors')->callbacks(array($this, 'fieldOrganizationType'));
+    $this->addFieldMapping('field_responsible_actors', 'field_responsible_actors')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_affected_organization_type', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizationType'));
+    $this->addFieldMapping('field_affected_organizations', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_acc_attach_file', 'field_attachments')->sourceMigration($files_migration);
+    $this->addFieldMapping('field_acc_attach_file:display', 'field_attachments:display');
+    $this->addFieldMapping('field_acc_attach_file:description', 'field_attachments:description');
+    $this->addFieldMapping('field_acc_attach_file:file_class')->defaultValue('MigrateFileFid');
+  }
+
+  public function prepare($entity, $row) {
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
+
+  protected function fieldAccType($value) {
+    return $this->translateTerms($value, 'acc_incident_types');
+  }
+
+  protected function fieldAccTypeAffectee($value) {
+    return $this->translateTerms($value, 'acc_type_of_aid_workers');
+  }
+
+  protected function fieldOrganizationType($value) {
+    $translated = $this->translateTerms($value, 'hr_organization_type');
+    if (empty($translated)) {
+      // Get the organization
+      $translated = $this->translateTerms($value, 'hr_organization');
+      $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
+      $org_type = taxonomy_term_load($org_type_tid);
+      return array($org_type);
+    }
+    else {
+      return $translated;
+    } 
+  }
+}
+
+/**
+ * Migration class for access incidents impacts
+ */
+class HRAccImpactsCollectionMigration extends DrupalMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $acc_incidents_migration = 'acc_incidents';
+    if ($this->arguments['source_connection'] != 'www') {
+      $acc_incidents_migration = 'acc_incidents_'.$this->arguments['source_connection'];
+    }
+    $this->dependencies[] = $acc_incidents_migration;
+
+    $this->sourceFields += $this->version->getSourceFields('field_collection_item', 'field_acc_impacts');
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'field_acc_impacts_value' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'alias' => 'f'
+        )
+      ),
+      MigrateDestinationFieldCollection::getKeySchema()
+    );
+
+    $this->source = new MigrateSourceSQL($this->query(), $this->sourceFields, NULL, $this->sourceOptions);
+
+    $this->destination = new MigrateDestinationFieldCollection(
+      'field_acc_impacts',
+      array('host_entity_type' => 'node')
+    );
+
+    $this->addUnmigratedSources(array('language'));
+
+    $this->addFieldMapping('host_entity_id', 'entity_id')
+      ->sourceMigration($acc_incidents_migration);
+
+    $this->addFieldMapping('field_acc_impact_type', 'field_acc_impact_type')->callbacks(array($this, 'fieldAccImpactType'));
+    $this->addFieldMapping('field_acc_impact_value', 'field_acc_impact_value');
+
+  }
+
+  public function query() {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_field_acc_impacts', 'f')
+             ->fields('f', array('entity_id', 'language', 'field_acc_impacts_value'));
+    return $query;
+  }
+
+  public function prepareRow($row) {
+    if (parent::prepareRow($row) === FALSE) {
+      return FALSE;
+    }
+    $this->version->getSourceValues($row, $row->field_acc_impacts_value);
+  }
+
+}
+
+
 class HRUserMigration extends DrupalUser7Migration {
 
   protected function getLegacyTermName($val) {
