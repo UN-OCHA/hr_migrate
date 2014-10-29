@@ -1922,11 +1922,11 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
-    $acc_incidents_migration = 'acc_incidents';
+    /*$acc_incidents_migration = 'acc_incidents';
     if ($this->arguments['source_connection'] != 'www') {
       $acc_incidents_migration = 'acc_incidents_'.$this->arguments['source_connection'];
     }
-    $this->dependencies[] = $acc_incidents_migration;
+    $this->dependencies[] = $acc_incidents_migration;*/
 
     $this->sourceFields += $this->version->getSourceFields('field_collection_item', 'field_acc_impacts');
 
