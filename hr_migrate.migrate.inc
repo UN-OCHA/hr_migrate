@@ -1858,7 +1858,7 @@ class HRAccessIncidentMigration extends HRMigration {
     $this->addFieldMapping('field_type_of_affectee', 'field_type_of_affectee')->callbacks(array($this, 'fieldAccTypeAffectee'));
     $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
     $this->addFieldMapping('field_responsible_organization_t', 'field_responsible_actors')->callbacks(array($this, 'fieldOrganizationType'));
-    $this->addFieldMapping('field_responsible_actors', 'field_responsible_actors')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_responsible_actors', 'field_responsible_actors')->callbacks(array($this, 'fieldResponsibleActor'));
     $this->addFieldMapping('field_affected_organization_type', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizationType'));
     $this->addFieldMapping('field_affected_organizations', 'field_affected_organizations')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_acc_attach_file', 'field_attachments')->sourceMigration($files_migration);
@@ -1894,6 +1894,18 @@ class HRAccessIncidentMigration extends HRMigration {
       else {
         return $translated;
       }
+    }
+    else {
+      return $translated;
+    }
+  }
+
+  protected function fieldResponsibleActor($value) {
+    // Try to find it in hr_organizations
+    $translated = $this->translateTerms($value, 'hr_organization');
+    if (empty($translated)) {
+      $translated = $this->translateTerms($value, 'acc_responsible_actors');
+      return $translated;
     }
     else {
       return $translated;
