@@ -355,42 +355,18 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
-    if ($this->arguments['source_connection'] == 'kenya') {
-      // Move Multi-sector cluster to Inter-Cluster Coordination theme
-      if (!empty($row->field_clusters) && in_array(124, $row->field_clusters)) {
-        $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
+    if ($this->arguments['source_connection'] == 'southsudan') {
+      // Move local theme Humanitarian Access to global theme Humanitarian Access
+      if (!empty($row->field_local_themes) && in_array(517, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Humanitarian Access", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
       }
 
-      // Move Inter-Sector cluster to Inter-Cluster Coordination theme
-      if (!empty($row->field_clusters) && in_array(616, $row->field_clusters)) {
-        $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
-        $tid = reset(array_keys($terms));
-        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
-        node_save($entity);
-      }
-
-      // Move local theme KIRA to global theme KIRA
-      if (!empty($row->field_local_themes) && in_array(1149, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment", 'hr_theme');
-        $tid = reset(array_keys($terms));
-        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
-        node_save($entity);
-      }
-
-      // Move local theme KIRA Training to global theme KIRA Training
-      if (!empty($row->field_local_themes) && in_array(1168, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment Training", 'hr_theme');
-        $tid = reset(array_keys($terms));
-        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
-        node_save($entity);
-      }
-
-      // Move local theme KIRA Secondary Data to global theme KIRA Secondary Data
-      if (!empty($row->field_local_themes) && in_array(1153, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Kenya Inter-agency Rapid Assessment Secondary Data", 'hr_theme');
+      // Move local theme Rapid Response Mechanism to global theme Rapid Response Mechanism
+      if (!empty($row->field_local_themes) && in_array(879, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Rapid Response Mechanism", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
