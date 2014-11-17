@@ -253,79 +253,32 @@ class HRMigration extends DrupalNode7Migration {
     }
     else {
       $type = 'hr_operation';
-      if ($this->arguments['source_connection'] == 'rosa') {
+      if ($this->arguments['source_connection'] == 'ea') {
         $titles = array();
-        $rosa_operations = array(
-          'Angola' => 'Angola',
-          'Botswana' => 'Botswana',
-          'Comoros' => 'Comoros',
-          'Lesotho' => 'Lesotho',
-          'Madagascar' => 'Madagascar',
-          'Malawi' => 'Malawi',
-          'Mauritius' => 'Mauritius',
-          'Mozambique' => 'Mozambique',
-          'Namibia' => 'Namibia',
-          'Seychelles' => 'Seychelles',
-          'South Africa' => 'South Africa',
-          'Southern Africa' => 'Southern Africa',
-          'Swaziland' => 'Swaziland',
-          'Tanzania' => 'Tanzania',
-          'Zambia' => 'Zambia',
-          'Zimbabwe' => 'Zimbabwe',
-          'Cabo Delgado' => 'Mozambique',
-          'Gaza' => 'Mozambique',
-          'Inhambane' => 'Mozambique',
-          'Manica' => 'Mozambique',
-          'Maputo' => 'Mozambique',
-          'Nampula' => 'Mozambique',
-          'Niassa' => 'Mozambique',
-          'Sofala' => 'Mozambique',
-          'Tete' => 'Mozambique',
-          'Zambezia' => 'Mozambique',
-          'Caprivi' => 'Namibia',
-          'Erongo' => 'Namibia',
-          'Hardap' => 'Namibia',
-          'Karas' => 'Namibia',
-          'Kavango' => 'Namibia',
-          'Khomas' => 'Namibia',
-          'Kunene' => 'Namibia',
-          'Ohangwena' => 'Namibia',
-          'Omaheke' => 'Namibia',
-          'Omusati' => 'Namibia',
-          'Oshana' => 'Namibia',
-          'Oshikoto' => 'Namibia',
-          'Otjozondjupa' => 'Namibia',
-          'Eastern Cape' => 'South Africa',
-          'Free State' => 'South Africa',
-          'Gauteng' => 'South Africa',
-          'ZwaZulu-Natal' => 'South Africa',
-          'Limpopo' => 'South Africa',
-          'Mpumalanga' => 'South Africa',
-          'Northern Cape' => 'South Africa',
-          'North West' => 'South Africa',
-          'Western Cape' => 'South Africa',
-          'Bulawayo' => 'Zimbabwe',
-          'Manicaland' => 'Zimbabwe',
-          'Mashonaland Central' => 'Zimbabwe',
-          'Mashonaland East' => 'Zimbabwe',
-          'Mashonaland West' => 'Zimbabwe',
-          'Matebeleland North' => 'Zimbabwe',
-          'Matabeleland South' => 'Zimbabwe',
-          'Midlands' => 'Zimbabwe',
-          'Masvingo' => 'Zimbabwe',
-          'Harare' => 'Zimbabwe',
+        $ea_operations = array(
+          'Eastern Africa' => 'Eastern Africa',
+          'Burundi' => 'Burundi',
+          'Djibouti' => 'Djibouti',
+          'Eritrea' => 'Eritrea',
+          'Ethiopia' => 'Ethiopia',
+          'Kenya' => 'Kenya',
+          'Rwanda' => 'Rwanda',
+          'Somalia' => 'Somalia',
+          'South Sudan' => 'South Sudan',
+          'Sudan' => 'Sudan',
+          'Uganda' => 'Uganda',
         );
         // Get locations from row
         if (isset($row->field_locations)) {
           $tids = $row->field_locations;
           foreach ($tids as $tid) {
             $location = $this->getLegacyTermName($tid);
-            $titles[] = $rosa_operations[$location];
+            $titles[] = $ea_operations[$location];
           }
         }
         else {
           debug('COULD NOT FIND LOCATIONS');
-          $titles[] = 'Southern Africa';
+          $titles[] = 'Eastern Africa';
         }
       }
     }
@@ -900,7 +853,7 @@ class HREventsMigration extends HRMigration {
         $timezone = 'Africa/Juba';
         break;
     }
-    if ($this->arguments['source_connection'] == 'rosa') {
+    if ($this->arguments['source_connection'] == 'ea') {
       $this->addFieldMapping('field_event_data:timezone')->callbacks(array($this, 'fieldEventDateTimezone'));
     }
     else {
@@ -917,53 +870,38 @@ class HREventsMigration extends HRMigration {
     $node = node_load($gid);
     $timezone = NULL;
     switch ($node->title) {
-      case 'Angola':
-        $timezone = 'Africa/Luanda';
+      case 'Eastern Africa':
+        $timezone = 'Africa/Nairobi';
         break;
-      case 'Botswana':
-        $timezone = 'Africa/Gaborone';
+      case 'Burundi':
+        $timezone = 'Africa/Bujumbura';
         break;
-      case 'Comoros':
-        $timezone = 'Indian/Comoro';
+      case 'Djibouti':
+        $timezone = 'Africa/Djibouti';
         break;
-      case 'Lesotho':
-        $timezone = 'Africa/Maseru';
+      case 'Eritrea':
+        $timezone = 'Africa/Asmara';
         break;
-      case 'Madagascar':
-        $timezone = 'Indian/Antananarivo';
+      case 'Ethiopia':
+        $timezone = 'Africa/Addis_Ababa';
         break;
-      case 'Malawi':
-        $timezone = 'Africa/Blantyre';
+      case 'Kenya':
+        $timezone = 'Africa/Nairobi';
         break;
-      case 'Mauritius':
-        $timezone = 'Indian/Mauritius';
+      case 'Rwanda':
+        $timezone = 'Africa/Kigali';
         break;
-      case 'Mozambique':
-        $timezone = 'Africa/Maputo';
+      case 'Somalia':
+        $timezone = 'Africa/Mogadishu';
         break;
-      case 'Namibia':
-        $timezone = 'Africa/Windhoek';
+      case 'South Sudan':
+        $timezone = 'Africa/Juba';
         break;
-      case 'Seychelles':
-        $timezone = 'Indian/Mahe';
+      case 'Sudan':
+        $timezone = 'Africa/Khartoum';
         break;
-      case 'South Africa':
-        $timezone = 'Africa/Johannesburg';
-        break;
-      case 'Southern Africa':
-        $timezone = 'Africa/Johannesburg';
-        break;
-      case 'Swaziland':
-        $timezone = 'Africa/Mbabane';
-        break;
-      case 'Tanzania':
-        $timezone = 'Africa/Dar_es_Salaam';
-        break;
-      case 'Zambia':
-        $timezone = 'Africa/Lusaka';
-        break;
-      case 'Zimbabwe':
-        $timezone = 'Africa/Harare';
+      case 'Uganda':
+        $timezone = 'Africa/Kampala';
         break;
     }
   }
@@ -2048,74 +1986,27 @@ class HRUserMigration extends DrupalUser7Migration {
     }
     else {
       $type = 'hr_operation';
-      if ($this->arguments['source_connection'] == 'rosa') {
+      if ($this->arguments['source_connection'] == 'ea') {
         $titles = array();
-        $rosa_operations = array(
-          'Angola' => 'Angola',
-          'Botswana' => 'Botswana',
-          'Comoros' => 'Comoros',
-          'Lesotho' => 'Lesotho',
-          'Madagascar' => 'Madagascar',
-          'Malawi' => 'Malawi',
-          'Mauritius' => 'Mauritius',
-          'Mozambique' => 'Mozambique',
-          'Namibia' => 'Namibia',
-          'Seychelles' => 'Seychelles',
-          'South Africa' => 'South Africa',
-          'Southern Africa' => 'Southern Africa',
-          'Swaziland' => 'Swaziland',
-          'Tanzania' => 'Tanzania',
-          'Zambia' => 'Zambia',
-          'Zimbabwe' => 'Zimbabwe',
-          'Cabo Delgado' => 'Mozambique',
-          'Gaza' => 'Mozambique',
-          'Inhambane' => 'Mozambique',
-          'Manica' => 'Mozambique',
-          'Maputo' => 'Mozambique',
-          'Nampula' => 'Mozambique',
-          'Niassa' => 'Mozambique',
-          'Sofala' => 'Mozambique',
-          'Tete' => 'Mozambique',
-          'Zambezia' => 'Mozambique',
-          'Caprivi' => 'Namibia',
-          'Erongo' => 'Namibia',
-          'Hardap' => 'Namibia',
-          'Karas' => 'Namibia',
-          'Kavango' => 'Namibia',
-          'Khomas' => 'Namibia',
-          'Kunene' => 'Namibia',
-          'Ohangwena' => 'Namibia',
-          'Omaheke' => 'Namibia',
-          'Omusati' => 'Namibia',
-          'Oshana' => 'Namibia',
-          'Oshikoto' => 'Namibia',
-          'Otjozondjupa' => 'Namibia',
-          'Eastern Cape' => 'South Africa',
-          'Free State' => 'South Africa',
-          'Gauteng' => 'South Africa',
-          'ZwaZulu-Natal' => 'South Africa',
-          'Limpopo' => 'South Africa',
-          'Mpumalanga' => 'South Africa',
-          'Northern Cape' => 'South Africa',
-          'North West' => 'South Africa',
-          'Western Cape' => 'South Africa',
-          'Bulawayo' => 'Zimbabwe',
-          'Manicaland' => 'Zimbabwe',
-          'Mashonaland Central' => 'Zimbabwe',
-          'Mashonaland East' => 'Zimbabwe',
-          'Mashonaland West' => 'Zimbabwe',
-          'Matebeleland North' => 'Zimbabwe',
-          'Matabeleland South' => 'Zimbabwe',
-          'Midlands' => 'Zimbabwe',
-          'Masvingo' => 'Zimbabwe',
-          'Harare' => 'Zimbabwe',
+        $ea_operations = array(
+          'Eastern Africa' => 'Eastern Africa',
+          'Burundi' => 'Burundi',
+          'Djibouti' => 'Djibouti',
+          'Eritrea' => 'Eritrea',
+          'Ethiopia' => 'Ethiopia',
+          'Kenya' => 'Kenya',
+          'Rwanda' => 'Rwanda',
+          'Somalia' => 'Somalia',
+          'South Sudan' => 'South Sudan',
+          'Sudan' => 'Sudan',
+          'Uganda' => 'Uganda',
         );
         // Get locations from row
         $pid = $this->getProfileFromUid($row->uid);
         $tids = $this->getProfileLocations($pid);
         foreach ($tids as $tid) {
           $location = $this->getLegacyTermName($tid);
-          $titles[] = $rosa_operations[$location];
+          $titles[] = $ea_operations[$location];
         }
       }
     }
