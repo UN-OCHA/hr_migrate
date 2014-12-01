@@ -43,6 +43,7 @@ function hr_migrate_register_migrations() {
   hr_migrate_register_site_migration('chad', 'chad.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
   hr_migrate_register_site_migration('southsudan', 'southsudan.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment', 'acc_incident'));
   hr_migrate_register_site_migration('ea', 'ea.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment'));
+  hr_migrate_register_site_migration('yemen', 'yemen.humanitarianresponse.info', array('profile', 'hr_page', 'hr_document', 'hr_news', 'hr_event', 'hr_contact', 'hr_infographic', 'hr_assessment', 'acc_incident'));
 }
 
 /**
