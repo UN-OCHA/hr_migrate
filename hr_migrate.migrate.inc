@@ -247,6 +247,7 @@ class HRMigration extends DrupalNode7Migration {
       'chad' => 'Chad',
       'southsudan' => 'South Sudan',
       'yemen' => 'Yemen',
+      'pak' => 'Pakistan',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
@@ -855,6 +856,9 @@ class HREventsMigration extends HRMigration {
         break;
       case 'yemen':
         $timezone = 'Asia/Aden';
+        break;
+      case 'pak':
+        $timezone = 'Asia/Karachi';
         break;
     }
     if ($this->arguments['source_connection'] == 'ea') {
@@ -1916,6 +1920,83 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
 
 }
 
+/**
+ * Migration of Access Applications
+ */
+class HRAccessApplicationMigration extends HRMigration {
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $files_migration = 'hr_files';
+    if ($this->arguments['source_connection'] != 'www') {
+      $files_migration = 'hr_files_'.$this->arguments['source_connection'];
+    }
+    $this->dependencies[] = $files_migration;
+
+    $this->addUnmigratedSources(array(
+      'field_acc_impacts',
+      'field_acc_impacts:revision_id',
+    ));
+    $this->addUnmigratedDestinations(array(
+      'field_acc_impacts',
+    ));
+
+
+    $this->removeFieldMapping('body:language');
+    $this->addFieldMapping('body:language', 'language')->defaultValue('en');
+
+    $this->addFieldMapping('field_acc_date', 'field_date_app');
+    $this->addFieldMapping('field_acc_date:to', 'field_date_app:value2');
+    $this->addFieldMapping('field_acc_date:timezone')->defaultValue('UTC');
+    $this->addFieldMapping('field_acc_application_types', 'field_acc_application_types')->callbacks(array($this, 'fieldAccApplicationType'));
+    $this->addFieldMapping('field_acc_submitted_by_org_type', 'field_organization_type')->callbacks(array($this, 'fieldOrganizationType'));
+    $this->addFieldMapping('field_acc_submitted_by', 'field_organizations')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_nationality', 'field_nationality');
+    $this->addFieldMapping('field_locations', 'field_locations')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_acc_geo_location_dest', 'field_geographical_location_dest')->callbacks(array($this, 'fieldLocations'));
+    $this->addFieldMapping('field_submitted_to', 'field_submited_to')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_acc_submission_status', 'field_acc_submission_status')->callbacks(array($this, 'fieldAccSubmissionStatus'));
+    $this->addFieldMapping('field_if_denied_by_whom_', 'field_if_denied_app')->callbacks(array($this, 'fieldOrganizations'));
+    $this->addFieldMapping('field_how_many_days', 'field_how_many_days');
+    
+  }
+
+  public function prepare($entity, $row) {
+    $entity->og_group_ref[LANGUAGE_NONE] = $this->getSpaces($row);
+  }
+
+  public function complete($entity, $row) {
+    parent::complete($entity, $row);
+    $this->redirect($entity, $row);
+  }
+
+  protected function fieldAccApplicationType($value) {
+    return $this->translateTerms($value, 'acc_application_types');
+  }
+
+  protected function fieldAccSubmissionStatus($value) {
+    return $this->translateTerms($value, 'acc_application_submission_status');
+  }
+
+  protected function fieldOrganizationType($value) {
+    $translated = $this->translateTerms($value, 'hr_organization_type');
+    if (empty($translated)) {
+      // Get the organization
+      $translated = $this->translateTerms($value, 'hr_organization');
+      if (!empty($translated)) {
+        $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
+        return array($org_type_tid);
+      }
+      else {
+        return $translated;
+      }
+    }
+    else {
+      return $translated;
+    }
+  }
+}
+
 
 class HRUserMigration extends DrupalUser7Migration {
 
@@ -1984,6 +2065,7 @@ class HRUserMigration extends DrupalUser7Migration {
       'chad' => 'Chad',
       'southsudan' => 'South Sudan',
       'yemen' => 'Yemen',
+      'pak' => 'Pakistan',
     );
     if (in_array($this->arguments['source_connection'], array_keys($operations))) {
       $type = 'hr_operation';
