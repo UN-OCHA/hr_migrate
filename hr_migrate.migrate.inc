@@ -1962,7 +1962,8 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
   public function query() {
     $query = Database::getConnection('default', $this->sourceConnection)
              ->select('field_data_field_acc_impacts', 'f')
-             ->fields('f', array('entity_id', 'language', 'field_acc_impacts_value'));
+             ->fields('f', array('entity_id', 'language', 'field_acc_impacts_value'))
+             ->condition('bundle', 'acc_incident', '=');
     return $query;
   }
 
@@ -1973,6 +1974,60 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
     $this->version->getSourceValues($row, $row->field_acc_impacts_value);
   }
 
+}
+
+/**
+ * Migration of Access Applications impacts
+ */
+class HRAccImpactsApplicationsCollectionMigration extends HRAccImpactsCollectionMigration {
+
+  public function __construct(array $arguments) {
+    parent::__construct($arguments);
+
+    $acc_applications_migration = 'hr_acc_applications';
+    if ($this->arguments['source_connection'] != 'www') {
+      $acc_applications_migration = 'hr_acc_applications_'.$this->arguments['source_connection'];
+    }
+    $this->dependencies[] = $acc_incidents_migration;
+
+    $this->sourceFields += $this->version->getSourceFields('field_collection_item', 'field_acc_impacts');
+
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        'field_acc_impacts_value' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'alias' => 'f'
+        )
+      ),
+      MigrateDestinationFieldCollection::getKeySchema()
+    );
+
+    $this->source = new MigrateSourceSQL($this->query(), $this->sourceFields, NULL, $this->sourceOptions);
+
+    $this->destination = new MigrateDestinationFieldCollection(
+      'field_acc_impacts',
+      array('host_entity_type' => 'node')
+    );
+
+    $this->addUnmigratedSources(array('language'));
+
+    $this->addFieldMapping('host_entity_id', 'entity_id')
+      ->sourceMigration($acc_applications_migration);
+
+    $this->addFieldMapping('field_acc_impact_type', 'field_acc_impact_type')->callbacks(array($this, 'fieldAccImpactType'));
+    $this->addFieldMapping('field_acc_impact_value', 'field_acc_impact_value');
+
+  }
+
+  public function query() {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('field_data_field_acc_impacts', 'f')
+             ->fields('f', array('entity_id', 'language', 'field_acc_impacts_value'))
+             ->condition('bundle', 'acc_application', '=');
+    return $query;
+  }
 }
 
 /**

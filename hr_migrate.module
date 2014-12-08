@@ -257,6 +257,15 @@ function hr_migrate_register_site_migration($source_connection, $site, $content_
     Migration::registerMigration('HRAccImpactsCollectionMigration', $acc_impact_arguments['machine_name'], $acc_impact_arguments);
   }
 
+  if (in_array('acc_application', $content_types)) {
+    $acc_impact_arguments = $common_arguments + array(
+      'description' => t('Migration of access impacts from '.$site),
+      'machine_name' => 'hr_acc_impacts_applications'.$machine_name,
+    );
+
+    Migration::registerMigration('HRAccImpactsApplicationsCollectionMigration', $acc_impact_arguments['machine_name'], $acc_impact_arguments);
+  }
+
 
 
 }
