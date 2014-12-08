@@ -1916,6 +1916,10 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
 
   }
 
+  protected function fieldAccImpactType($value) {
+    return $this->translateTerms($value, 'acc_impact_types');
+  }
+
   public function query() {
     $query = Database::getConnection('default', $this->sourceConnection)
              ->select('field_data_field_acc_impacts', 'f')
