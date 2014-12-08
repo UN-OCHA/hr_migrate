@@ -1920,6 +1920,45 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
     return $this->translateTerms($value, 'acc_impact_types');
   }
 
+  protected function getLegacyTermName($val) {
+    $query = Database::getConnection('default', $this->sourceConnection)
+             ->select('taxonomy_term_data', 't')
+             ->fields('t', array('name'))
+             ->condition('tid', $val);
+    $result = $query->execute()->fetchAssoc();
+    $term_name = isset($result['name']) ? $result['name'] : '';
+    return $term_name;
+  }
+
+  protected function translateTerms($value, $vocabulary, $silent = FALSE) {
+    if (!is_array($value)) {
+      $value = array($value);
+    }
+    $return  = array();
+    foreach ($value as $i => $val) {
+      $term_name = $this->getLegacyTermName($val);
+      if (!empty($term_name)) {
+        $terms = taxonomy_get_term_by_name($term_name, $vocabulary);
+        if (!empty($terms)) {
+          $return[$i] = reset(array_keys($terms));
+        }
+        else {
+          if (!$silent) {
+            debug('Could not find term '.$term_name.' in current database');
+          }
+          else {
+            $return['error'] = 'Could not find term '.$term_name.' in current database';
+          }
+        }
+      }
+      else {
+        debug('Could not find term with tid '.$val.' in legacy database');
+      }
+    }
+
+    return $return;
+  }
+
   public function query() {
     $query = Database::getConnection('default', $this->sourceConnection)
              ->select('field_data_field_acc_impacts', 'f')
