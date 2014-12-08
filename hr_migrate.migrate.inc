@@ -1879,9 +1879,9 @@ class HRAccImpactsCollectionMigration extends DrupalMigration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
 
-    $acc_incidents_migration = 'acc_incidents';
+    $acc_incidents_migration = 'hr_acc_incidents';
     if ($this->arguments['source_connection'] != 'www') {
-      $acc_incidents_migration = 'acc_incidents_'.$this->arguments['source_connection'];
+      $acc_incidents_migration = 'hr_acc_incidents_'.$this->arguments['source_connection'];
     }
     $this->dependencies[] = $acc_incidents_migration;
 
