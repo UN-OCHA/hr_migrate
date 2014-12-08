@@ -1991,16 +1991,17 @@ class HRAccessApplicationMigration extends HRMigration {
   }
 
   protected function fieldOrganizationType($value) {
-    $translated = $this->translateTerms($value, 'hr_organization_type');
-    if (empty($translated)) {
+    $translated = $this->translateTerms($value, 'hr_organization_type', TRUE);
+    if (isset($translated['error'])) {
       // Get the organization
-      $translated = $this->translateTerms($value, 'hr_organization');
-      if (!empty($translated)) {
+      $translated = $this->translateTerms($value, 'hr_organization', TRUE);
+      if (!isset($translated['error'])) {
         $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
         return array($org_type_tid);
       }
       else {
-        return $translated;
+        debug($translated['error']);
+        return array();
       }
     }
     else {
