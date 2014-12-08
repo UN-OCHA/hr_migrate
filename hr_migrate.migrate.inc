@@ -51,7 +51,7 @@ class HRMigration extends DrupalNode7Migration {
   }
 
 
-  protected function translateTerms($value, $vocabulary) {
+  protected function translateTerms($value, $vocabulary, $silent = FALSE) {
     if (!is_array($value)) {
       $value = array($value);
     }
@@ -64,7 +64,12 @@ class HRMigration extends DrupalNode7Migration {
           $return[$i] = reset(array_keys($terms));
         }
         else {
-          debug('Could not find term '.$term_name.' in current database');
+          if (!$silent) {
+            debug('Could not find term '.$term_name.' in current database');
+          }
+          else {
+            $return['error'] = 'Could not find term '.$term_name.' in current database';
+          }
         }
       }
       else {
@@ -1829,16 +1834,17 @@ class HRAccessIncidentMigration extends HRMigration {
   }
 
   protected function fieldOrganizationType($value) {
-    $translated = $this->translateTerms($value, 'hr_organization_type');
-    if (empty($translated)) {
+    $translated = $this->translateTerms($value, 'hr_organization_type', TRUE);
+    if (isset($translated['error'])) {
       // Get the organization
-      $translated = $this->translateTerms($value, 'hr_organization');
-      if (!empty($translated)) {
+      $translated = $this->translateTerms($value, 'hr_organization', TRUE);
+      if (!isset($translated['error'])) {
         $org_type_tid = $translated[0]->field_organization_type[LANGUAGE_NONE][0]['target_id'];
         return array($org_type_tid);
       }
       else {
-        return $translated;
+        debug($translated['error']);
+        return array();
       }
     }
     else {
@@ -1848,10 +1854,16 @@ class HRAccessIncidentMigration extends HRMigration {
 
   protected function fieldResponsibleActor($value) {
     // Try to find it in hr_organizations
-    $translated = $this->translateTerms($value, 'hr_organization');
-    if (empty($translated)) {
-      $translated = $this->translateTerms($value, 'acc_responsible_actors');
-      return $translated;
+    $translated = $this->translateTerms($value, 'hr_organization', TRUE);
+    if (isset($translated['error'])) {
+      $translated = $this->translateTerms($value, 'acc_responsible_actors', TRUE);
+      if (isset($translated['error'])) {
+        debug($translated['error']);
+        return array();
+      }
+      else {
+        return $translated;
+      }
     }
     else {
       return $translated;
