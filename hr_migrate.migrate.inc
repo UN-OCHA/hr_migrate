@@ -1970,6 +1970,7 @@ class HRAccessApplicationMigration extends HRMigration {
     $this->addFieldMapping('field_acc_submission_status', 'field_acc_submission_status')->callbacks(array($this, 'fieldAccSubmissionStatus'));
     $this->addFieldMapping('field_if_denied_by_whom_', 'field_if_denied_app')->callbacks(array($this, 'fieldOrganizations'));
     $this->addFieldMapping('field_how_many_days', 'field_how_many_days');
+    $this->addFieldMapping('field_bundles', 'field_clusters')->callbacks(array($this, 'fieldBundles'));
     
   }
 
