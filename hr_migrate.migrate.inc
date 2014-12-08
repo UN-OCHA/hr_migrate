@@ -1988,36 +1988,12 @@ class HRAccImpactsApplicationsCollectionMigration extends HRAccImpactsCollection
     if ($this->arguments['source_connection'] != 'www') {
       $acc_applications_migration = 'hr_acc_applications_'.$this->arguments['source_connection'];
     }
-    $this->dependencies[] = $acc_incidents_migration;
+    $this->dependencies[] = $acc_applications_migration;
 
-    $this->sourceFields += $this->version->getSourceFields('field_collection_item', 'field_acc_impacts');
-
-    $this->map = new MigrateSQLMap($this->machineName,
-      array(
-        'field_acc_impacts_value' => array(
-          'type' => 'int',
-          'unsigned' => TRUE,
-          'not null' => TRUE,
-          'alias' => 'f'
-        )
-      ),
-      MigrateDestinationFieldCollection::getKeySchema()
-    );
-
-    $this->source = new MigrateSourceSQL($this->query(), $this->sourceFields, NULL, $this->sourceOptions);
-
-    $this->destination = new MigrateDestinationFieldCollection(
-      'field_acc_impacts',
-      array('host_entity_type' => 'node')
-    );
-
-    $this->addUnmigratedSources(array('language'));
-
+    $this->removeFieldMapping('host_entity_id');
     $this->addFieldMapping('host_entity_id', 'entity_id')
       ->sourceMigration($acc_applications_migration);
 
-    $this->addFieldMapping('field_acc_impact_type', 'field_acc_impact_type')->callbacks(array($this, 'fieldAccImpactType'));
-    $this->addFieldMapping('field_acc_impact_value', 'field_acc_impact_value');
 
   }
 
