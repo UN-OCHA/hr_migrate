@@ -316,18 +316,34 @@ class HRMigration extends DrupalNode7Migration {
     if (isset($entity->body)) {
       $this->translateBody($entity);
     }
-    if ($this->arguments['source_connection'] == 'southsudan') {
-      // Move local theme Humanitarian Access to global theme Humanitarian Access
-      if (!empty($row->field_local_themes) && in_array(517, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Humanitarian Access", 'hr_theme');
+    if ($this->arguments['source_connection'] == 'colombia') {
+      // Move local theme Afro-colombians to global theme Afro-colombians
+      if (!empty($row->field_local_themes) && in_array(2636, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Afro-colombians", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
       }
 
-      // Move local theme Rapid Response Mechanism to global theme Rapid Response Mechanism
-      if (!empty($row->field_local_themes) && in_array(879, $row->field_local_themes)) {
-        $terms = taxonomy_get_term_by_name("Rapid Response Mechanism", 'hr_theme');
+      // Move local theme World Humanitarian Day to global theme World Humanitarian Day
+      if (!empty($row->field_local_themes) && in_array(2932, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("World Humanitarian Day", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move local theme Indigenas to global theme Indigenous Populations
+      if (!empty($row->field_local_themes) && in_array(2637, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Indigenous populations", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move local theme MIRA to global theme MIRA
+      if (!empty($row->field_local_themes) && in_array(2767, $row->field_local_themes)) {
+        $terms = taxonomy_get_term_by_name("Multi-Cluster Initial Rapid Assessment", 'hr_theme');
         $tid = reset(array_keys($terms));
         $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
         node_save($entity);
