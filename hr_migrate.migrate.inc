@@ -349,6 +349,22 @@ class HRMigration extends DrupalNode7Migration {
         node_save($entity);
       }
 
+      // Move cluster "Inter-cluster coordination" to "Inter-cluster coordination theme
+      if (!empty($row->field_clusters) && in_array(2931, $row->field_clusters)) {
+        $terms = taxonomy_get_term_by_name("Inter-Cluster Coordination", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
+      // Move cluster "Information Management" to "Information Management theme
+      if (!empty($row->field_clusters) && in_array(2911, $row->field_clusters)) {
+        $terms = taxonomy_get_term_by_name("Information Management", 'hr_theme');
+        $tid = reset(array_keys($terms));
+        $entity->field_themes[LANGUAGE_NONE][] = array('target_id' => $tid);
+        node_save($entity);
+      }
+
     }
   }
 
